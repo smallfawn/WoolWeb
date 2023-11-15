@@ -39,3 +39,17 @@ npm install pm2 -g
 ``````shell
 pm2 start Api.js
 ``````
+
+前端
+
+``````shell
+npm install
+``````
+打包
+``````shell
+npm run build
+``````
+调试
+``````shell
+npm run dev
+``````
