@@ -57,8 +57,10 @@ export const useCounterStore = defineStore('counter', {
                 },
             },
             YiDunCaptcha: {
-                show: null, status: {
-                    show: false, success: false
+                show: null, 
+                status: {
+                    show: false, 
+                    success: false
                 },
                 init: {
                     captchaId: "",
@@ -120,6 +122,7 @@ export const useCounterStore = defineStore('counter', {
             this.LoginElementId = options.type
             this[options.type].status.show = true
             this[options.type].init = options.config
+            this[options.type].status.success = false
         },
         set_captcha_success(options) {
             //设置成功的返回

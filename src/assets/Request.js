@@ -1,15 +1,21 @@
 import HttpRequest from "./HttpRequest"
-export { AppList, AppInfo,  Login_Admin, Register_Admin, get, set, getWeb, up,LoginRequest,SendSMSRequest }
+export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest }
+//顾名思义
 const AppList = async function (type) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppList?type=${type}` })
     return result
 }
+//顾名思义
 const AppInfo = async function (appname) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppInfo?app=${appname}` })
     return result
 }
-//根据后端返回需要什么参数 请求的时候加上就可以？
-//判断下拉菜单的选择  传入app  根据本次后端返回返回需要的参数 [mobile,TencentCaptcha:[Ticket,randstr]]
+/**
+ * 发送短信通用API
+ * @param {*} app APPNAME
+ * @param {*} request_body 其他组件构建的body
+ * @returns 
+ */
 const SendSMSRequest = async function (app, request_body) {
     let options = {
         url: `/Public/api/SendSMS/${app}`,
@@ -20,9 +26,13 @@ const SendSMSRequest = async function (app, request_body) {
     let { data: result } = await HttpRequest(options)
     return result
 }
-//
-
-const LoginRequest = async function (app,request_body){
+/**
+ * 登录通用API
+ * @param {*} app APPNAME
+ * @param {*} request_body 其他组件构建的body
+ * @returns 
+ */
+const LoginRequest = async function (app, request_body) {
     console.log(request_body);
     let options = {
         url: `/Public/api/Login/${app}`,
@@ -33,8 +43,12 @@ const LoginRequest = async function (app,request_body){
     let { data: result } = await HttpRequest(options)
     return result
 }
-
-
+/**
+ * 后台登陆
+ * @param {*} username 用户名
+ * @param {*} password 密码
+ * @returns token
+ */
 const Login_Admin = async function (username, password) {
     let options = {
         url: "/Private/api/login",
@@ -45,6 +59,12 @@ const Login_Admin = async function (username, password) {
     let { data: result } = await HttpRequest(options)
     return result
 }
+/**
+ * 后台注册
+ * @param {*} username 用户名
+ * @param {*} password 密码
+ * @returns 状态
+ */
 const Register_Admin = async function (username, password) {
     let options = {
         url: "/Private/api/register",
@@ -55,6 +75,11 @@ const Register_Admin = async function (username, password) {
     let { data: result } = await HttpRequest(options)
     return result
 }
+/**
+ * 获取后台设置的数据
+ * @param {*} variable 键
+ * @returns 值
+ */
 const get = async function (variable) {
     let options = {
         url: "/Private/api/get",
@@ -65,6 +90,12 @@ const get = async function (variable) {
     let { data: result } = await HttpRequest(options)
     return result
 }
+/**
+ * 设置数据
+ * @param {*} variable 键
+ * @param {*} value 值
+ * @returns 状态
+ */
 const set = async function (variable, value) {
     let options = {
         url: "/Private/api/set",
@@ -75,6 +106,10 @@ const set = async function (variable, value) {
     let { data: result } = await HttpRequest(options)
     return result
 }
+/**
+ * 获取WEB
+ * @returns 信息
+ */
 const getWeb = async function () {
     let options = {
         url: "/Private/api/get/web",
@@ -83,6 +118,9 @@ const getWeb = async function () {
     let { data: result } = await HttpRequest(options)
     return result
 }
+/**
+ * 上传变量
+ */
 const up = async function (variable, value) {
     let options = {
         url: "/Private/api/up",

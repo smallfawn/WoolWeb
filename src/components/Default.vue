@@ -58,6 +58,10 @@ let Login = async function () {
     if (store[store.AppInfo.captcha.type].show !== null && store[store.AppInfo.captcha.type].show !== undefined) {
       console.log(`展示执行验证码`);
       store[store.AppInfo.captcha.type].show()
+      //解决无需卸载监视的方法
+      //1.在创建验证码后给store一个captchaIsSuccess 默认0  验证码成功后 设置为1 然后侦听captchaIsSuccess 如果为1则 构建请求
+      //该方法无需根据后端返回null的情况而找不到type从而找不到对应验证码状态的store,但是需要考虑无需验证码时和返回null时
+      //还需要考虑 这个方法是否影响全局 比如重新选择APP时 和重新登录账号时 是否重新获取APPINFO和captchaIsSuccess
       const unwatch = watch(() => store[store.AppInfo.captcha.type].status.success, async (newVal, oldVal) => {
         //构建请求体
         console.log(`验证码通过`);
@@ -89,7 +93,7 @@ let sendSMS = async function () {
   if (store.AppInfo.return !== null) {
     Object.assign(SendSMSRequest_body, store.AppInfo.return)
   }
-  let unwatch
+
   if (store.AppInfo.captcha !== null) {
     console.log(`需要验证码`);
     if (store[store.AppInfo.captcha.type].show !== null && store[store.AppInfo.captcha.type].show !== undefined) {
@@ -98,7 +102,7 @@ let sendSMS = async function () {
       //console.log(store.AppInfo.captcha);//验证码配置
       //console.log(store.AppInfo);//APPINFO
       //console.log(store[store.AppInfo.captcha.type].status.success);//验证码状态
-      unwatch = watch(() => store[store.AppInfo.captcha.type].status.success, async (newVal, oldVal) => {
+      const unwatch = watch(() => store[store.AppInfo.captcha.type].status.success, async (newVal, oldVal) => {
         // 在这里执行相关逻辑
         console.log(`验证码通过`);
         console.log(SendSMSRequest_body);
@@ -134,13 +138,41 @@ onBeforeMount(async () => {
 })
 
 
-watch(() => [username.value, password.value], (newValue) => {
+watch(() => [username.value, password.value], async (newValue, oldValue) => {
+  if (oldValue[0] !== "" && newValue[0] == "") {
+    //猜测用户可能重新登录
+    //重新get app info
+    let result = await AppInfo(store.AppName)
+    store.set_AppInfo(result.data)
+    if (store.AppInfo.captcha !== null) {
+      console.log(`需要验证码`);
+      await setCaptcha(store.AppInfo.captcha.type)
+      store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+    } else {
+      store.set_NoCaptcha()
+      console.log(`不需要验证码`);
+    }
+  }
   store.set_UsernameAndPassword({
     username: newValue[0],
     password: newValue[1]
   })
 })
-watch(() => [mobile.value, code.value], (newValue) => {
+watch(() => [mobile.value, code.value], async (newValue, oldValue) => {
+  if (oldValue[0] !== "" && newValue[0] == "") {
+    //猜测用户可能重新登录
+    //重新get app info
+    let result = await AppInfo(store.AppName)
+    store.set_AppInfo(result.data)
+    if (store.AppInfo.captcha !== null) {
+      console.log(`需要验证码`);
+      await setCaptcha(store.AppInfo.captcha.type)
+      store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+    } else {
+      store.set_NoCaptcha()
+      console.log(`不需要验证码`);
+    }
+  }
   store.set_MobileAndCode({
     mobile: newValue[0],
     code: newValue[1]
@@ -156,7 +188,6 @@ watch(app, async (newValue) => {
     console.log(`需要验证码`);
     await setCaptcha(store.AppInfo.captcha.type)
     store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
-    console.log(store.TencentCaptcha);
   } else {
     store.set_NoCaptcha()
     console.log(`不需要验证码`);
