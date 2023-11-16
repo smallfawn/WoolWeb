@@ -1,5 +1,8 @@
 <template>
     <div>
+        <div v-if="store.dialog.status">
+            <Message></Message>
+        </div>
         <el-tabs v-model="activeName" @tab-click="">
             <el-tab-pane label="网站配置" name="first">
                 <div>
@@ -27,18 +30,28 @@
             </el-tab-pane>
             <el-tab-pane label="变量配置" name="third">
                 <div>
-                    <span>功能测试中: 暂不可用</span>
+                    <span>功能测试中: </span>
                     <table>
-                        <span>变量正则:</span>
-                        <span>请输入变量名</span>
-                        <el-input></el-input>
-                        <span>请输入一个账号需要几个变量</span>
-                        <el-input></el-input>
-                        <span>请输入一个账号几个变量的分隔符</span>
-                        <el-input></el-input>
-                        <span>请输入多个账号的分隔符</span>
-                        <el-input></el-input>
-                        <el-button type="primary" @click="">修改</el-button>
+                        <span>添加APP</span>
+                        <el-input v-model="createApp"></el-input>
+                        <el-select v-model="app" class="m-2" placeholder="APP" size="large">
+                            <el-option v-for="item in applist" :value="item" />
+                        </el-select>
+                        <el-button type="primary" @click="create_">添加</el-button>
+                        <br>
+                        <span>修改以下时请选择APP</span>
+                        <br>
+                        <span>请输入变量名(必填)</span>
+                        <el-input v-model="appVariable"></el-input>
+                        <span>请输入变量值示例(默认为空)</span>
+                        <el-input v-model="appTest"></el-input>
+                        <span>变量正则(留空默认不校验参数)</span>
+                        <el-input v-model="appRegular"></el-input>
+                        <span>请输入一个账号几个变量的分隔符(留空默认&)=功能复用暂时不用管</span>
+                        <el-input v-model="appStrSplitor"></el-input>
+                        <span>请输入多个账号的分隔符(留空默认@)</span>
+                        <el-input v-model="appEnvSplitor"></el-input>
+                        <el-button type="primary" @click="update_">修改</el-button>
                     </table>
                 </div>
             </el-tab-pane>
@@ -46,33 +59,73 @@
     </div>
 </template>
 <script setup>
+import Message from "./Message.vue";
+import { ref, onMounted, watch } from "vue"
+import { useCounterStore } from "../stores/counter";
+import { get, set, AppInfoPrivate, AppListPrivate, CreateValuePrivate, UpdateValuePrivate } from "../assets/Request"
 let activeName = ref("first")
 let qinglongVersion = ref("")
-let variableRegExp = ref("")
-import { ref, onBeforeMount, onMounted, watch } from "vue"
-import { useCounterStore } from "../stores/counter";
-import { get, set } from "../assets/Request"
+let appVariable = ref("")
+let appTest = ref("")
+let appRegular = ref("")
+let appStrSplitor = ref("")
+let appEnvSplitor = ref("")
+const store = useCounterStore()
+let webInit = ref({})
+let qinglongInit = ref({})
+let applist = ref([])
+let app = ref("")
+let createApp = ref("")
+
 async function set_qinglong() {
-    let res = await set("qinglong", {
+    let result = await set("qinglong", {
         url: qinglongInit.value.url,
         id: qinglongInit.value.id,
         secret: qinglongInit.value.secret,
         version: qinglongVersion.value
     })
-    console.log(res)
+    store.setDiaLog(true, result.message)
 }
+async function create_() {
+    let result = await CreateValuePrivate(createApp.value)
+    if (result.status == true) {
+        applist.value = (await AppListPrivate()).data
+    }
+    store.setDiaLog(true, result.message)
+}
+async function search_() {
+    let result = await AppInfoPrivate(app.value)
+    if (result.status == true) {
+        appVariable.value = result.data.variable
+        appTest.value = result.data.test
+        appRegular.value = result.data.regular
+        appStrSplitor.value = result.data.strSplitor
+        appEnvSplitor.value = result.data.envSplitor
+    }
 
+}
+async function update_() {
+    let result = await UpdateValuePrivate(app.value, {
+        variable: appVariable.value,
+        test: appTest.value,
+        regular: appRegular.value,
+        strSplitor: appStrSplitor.value,
+        envSplitor: appEnvSplitor.value
+    })
+    store.setDiaLog(true, result.message)
+}
 async function set_web() {
-    let res = await set("web", {
+    let result = await set("web", {
         name: webInit.value.name,
         notice: webInit.value.notice
     })
-    console.log(res)
+    store.setDiaLog(true, result.message)
 }
 
-const store = useCounterStore()
-let webInit = ref({})
-let qinglongInit = ref({})
+
+watch(app, () => {
+    search_()
+})
 onMounted(async () => {
     let qinglong = await get("qinglong")
     let web = await get("web")
@@ -86,6 +139,7 @@ onMounted(async () => {
         qinglongInit.value.id = qinglong.data.id
         qinglongInit.value.secret = qinglong.data.secret
     }
+    applist.value = (await AppListPrivate()).data
 })
 </script>
 <style scoped></style>

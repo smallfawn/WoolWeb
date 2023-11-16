@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onBeforeMount, onMounted, watch } from "vue"
-import { AppList, AppInfo, SendSMSRequest, getWeb, up, LoginRequest } from "../assets/Request"
+import { AppList, AppInfo, SendSMSRequest, getWeb, up, LoginRequest, AppInfoPrivate, AppListPrivate } from "../assets/Request"
 import Geetest3Captcha from "./Geetest3Captcha.vue";
 import TencentCaptcha from "./TencentCaptcha.vue";
 import YiDunCapacha from "./YiDunCapacha.vue";
@@ -19,12 +19,22 @@ let mobile = ref('');
 let code = ref("")
 let app = ref("")
 let AppListResult = ref("")
-
-
+let variable = ref("")
+let value = ref("")
+let valueAppList = ref([])
+let valueTest = ref("")
+let valueEnvSplitor = ref("")
 let selectedMethod = async function (type) {
   store.set_LoginType(type)
-  AppListResult = await AppList(type)
-  appList.value = AppListResult.data
+  //如果是自定义上传则不需要从总控获取APPLIST 而是从私有后端获取
+  if (store.LoginType == "custom") {
+    valueAppList.value = (await AppListPrivate()).data
+    return
+  } else {
+    appList.value = (await AppList(type)).data
+    return
+  }
+
 }
 
 let Login = async function () {
@@ -41,44 +51,50 @@ let Login = async function () {
       return
     }
   }
-  //判断总控返回是否正常
-  if (store.AppInfo == null || store.AppInfo == undefined) {
-    return
-  }
-  let request_body = new Object()
-  console.log(store.AppInfo.default);
-  for (let i of store.AppInfo.default) {
-    request_body[i] = store[i]
-  }
-  if (store.AppInfo.return !== null) {
-    Object.assign(request_body, store.AppInfo.return)
-  }
-  if (store.AppInfo.captcha !== null) {
-    console.log(`需要验证码`);
-    if (store[store.AppInfo.captcha.type].show !== null && store[store.AppInfo.captcha.type].show !== undefined) {
-      console.log(`展示执行验证码`);
-      store[store.AppInfo.captcha.type].show()
-      //解决无需卸载监视的方法
-      //1.在创建验证码后给store一个captchaIsSuccess 默认0  验证码成功后 设置为1 然后侦听captchaIsSuccess 如果为1则 构建请求
-      //该方法无需根据后端返回null的情况而找不到type从而找不到对应验证码状态的store,但是需要考虑无需验证码时和返回null时
-      //还需要考虑 这个方法是否影响全局 比如重新选择APP时 和重新登录账号时 是否重新获取APPINFO和captchaIsSuccess
-      const unwatch = watch(() => store[store.AppInfo.captcha.type].status.success, async (newVal, oldVal) => {
-        //构建请求体
-        console.log(`验证码通过`);
-        console.log(request_body);
-        Object.assign(request_body, store[store.AppInfo.captcha.type].success)
-        let result = await LoginRequest(app.value, request_body)
-        store.set_AppInfo(result.data)
-        store.setDiaLog(true, result.message)
-        console.log(result);
-        unwatch()
-      })
-    }
-  } else {
-    let result = await LoginRequest(app.value, request_body)
-    store.set_AppInfo(result.data)
+  if (store.LoginType == "custom") {
+    let result = await up(variable.value, value.value, valueEnvSplitor.value)
     store.setDiaLog(true, result.message)
+  } else {
+    //判断总控返回是否正常
+    if (store.AppInfo == null || store.AppInfo == undefined) {
+      return
+    }
+    let request_body = new Object()
+    //console.log(store.AppInfo.default);
+    for (let i of store.AppInfo.default) {
+      request_body[i] = store[i]
+    }
+    if (store.AppInfo.return !== null) {
+      Object.assign(request_body, store.AppInfo.return)
+    }
+    if (store.AppInfo.captcha !== null) {
+      console.log(`需要验证码`);
+      if (store[store.AppInfo.captcha.type].show !== null && store[store.AppInfo.captcha.type].show !== undefined) {
+        console.log(`展示执行验证码`);
+        store[store.AppInfo.captcha.type].show()
+        //解决无需卸载监视的方法
+        //1.在创建验证码后给store一个captchaIsSuccess 默认0  验证码成功后 设置为1 然后侦听captchaIsSuccess 如果为1则 构建请求
+        //该方法无需根据后端返回null的情况而找不到type从而找不到对应验证码状态的store,但是需要考虑无需验证码时和返回null时
+        //还需要考虑 这个方法是否影响全局 比如重新选择APP时 和重新登录账号时 是否重新获取APPINFO和captchaIsSuccess
+        const unwatch = watch(() => store[store.AppInfo.captcha.type].status.success, async (newVal, oldVal) => {
+          //构建请求体
+          console.log(`验证码通过`);
+          console.log(request_body);
+          Object.assign(request_body, store[store.AppInfo.captcha.type].success)
+          let result = await LoginRequest(app.value, request_body)
+          store.set_AppInfo(result.data)
+          store.setDiaLog(true, result.message)
+          console.log(result);
+          unwatch()
+        })
+      }
+    } else {
+      let result = await LoginRequest(app.value, request_body)
+      //登录成功后不需要再更新APPINFO了
+      store.setDiaLog(true, result.message)
+    }
   }
+
 }
 
 let sendSMS = async function () {
@@ -137,6 +153,10 @@ onBeforeMount(async () => {
 
 })
 
+watch(value, async (newValue, oldValue) => {
+
+  store.set_custom(variable.value, newValue)
+})
 
 watch(() => [username.value, password.value], async (newValue, oldValue) => {
   if (oldValue[0] !== "" && newValue[0] == "") {
@@ -182,16 +202,25 @@ watch(() => [mobile.value, code.value], async (newValue, oldValue) => {
 watch(app, async (newValue) => {
   store.set_AppName(newValue)
   console.log(`您当前选择${newValue}`);
-  let result = await AppInfo(newValue)
-  store.set_AppInfo(result.data)
-  if (store.AppInfo.captcha !== null) {
-    console.log(`需要验证码`);
-    await setCaptcha(store.AppInfo.captcha.type)
-    store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+  let result
+  if (store.LoginType == "custom") {
+    result = await AppInfoPrivate(newValue)
+    valueTest.value = result.data.test
+    valueEnvSplitor.value = result.data.envSplitor
+    variable.value = result.data.variable
   } else {
-    store.set_NoCaptcha()
-    console.log(`不需要验证码`);
+    result = await AppInfo(newValue)
+    store.set_AppInfo(result.data)
+    if (store.AppInfo.captcha !== null) {
+      console.log(`需要验证码`);
+      await setCaptcha(store.AppInfo.captcha.type)
+      store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+    } else {
+      store.set_NoCaptcha()
+      console.log(`不需要验证码`);
+    }
   }
+
 });
 
 
@@ -209,11 +238,17 @@ watch(app, async (newValue) => {
       <el-button type="primary" @click="selectedMethod(`username`)">密码登录</el-button>
       <el-button type="primary" @click="selectedMethod(`mobile`)">手机登录</el-button>
       <el-button type="primary" @click="selectedMethod(`qrcode`)">扫码登录</el-button>
+      <el-button type="primary" @click="selectedMethod(`custom`)">自定义上传</el-button>
     </div>
     <br>
-    <div>
+    <div v-if="store.LoginType !== 'custom'">
       <el-select v-model="app" class="m-2" placeholder="APP" size="large">
         <el-option v-for="item in appList" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+    </div>
+    <div v-if="store.LoginType == 'custom'">
+      <el-select v-model="app" class="m-2" placeholder="APP" size="large">
+        <el-option v-for="item in valueAppList" :value="item" />
       </el-select>
     </div>
     <br>
@@ -230,7 +265,17 @@ watch(app, async (newValue) => {
       <el-table v-loading="true" style="width: 100%">
         <el-table-column prop="date" label="Date" width="180" />
       </el-table>
-      <el-button type="primary" @click="">获取二位码</el-button>
+      <el-button type="primary" @click="">获取二维码</el-button>
+    </div>
+    <div v-if="store.LoginType == 'custom'">
+      <span>变量名</span>
+      <br>
+      <span>示例</span>
+      <br>
+      <span>
+        {{ valueTest }}
+      </span><el-input type="text" v-model="variable" disabled placeholder="变量名" />
+      <span>变量值</span><el-input type="text" v-model="value" placeholder="变量值" />
     </div>
     <br>
     <el-button type="primary" @click="Login()" :id="store.LoginElementId">登录</el-button>

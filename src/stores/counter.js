@@ -9,6 +9,8 @@ export const useCounterStore = defineStore('counter', {
                 message: "",
                 title: "",
             },
+            variable: "",
+            value: "",
             LoginType: '',
             LoginElementId: "",
             Geetest3Captcha: {
@@ -57,9 +59,9 @@ export const useCounterStore = defineStore('counter', {
                 },
             },
             YiDunCaptcha: {
-                show: null, 
+                show: null,
                 status: {
-                    show: false, 
+                    show: false,
                     success: false
                 },
                 init: {
@@ -81,6 +83,10 @@ export const useCounterStore = defineStore('counter', {
         }
     },
     actions: {
+        set_custom(variable, value) {
+            this.variable = variable;
+            this.value = value;
+        },
         set_Notification(options) {
             this.Notification.status = options.status
             this.Notification.message = options.message

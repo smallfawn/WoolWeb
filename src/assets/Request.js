@@ -1,5 +1,5 @@
 import HttpRequest from "./HttpRequest"
-export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest }
+export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest, AppListPrivate, AppInfoPrivate, CreateValuePrivate, UpdateValuePrivate }
 //顾名思义
 const AppList = async function (type) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppList?type=${type}` })
@@ -8,6 +8,34 @@ const AppList = async function (type) {
 //顾名思义
 const AppInfo = async function (appname) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppInfo?app=${appname}` })
+    return result
+}
+const AppListPrivate = async function () {
+    let { data: result } = await HttpRequest({ url: `/Private/api/value/AppList` })
+    return result
+}
+const AppInfoPrivate = async function (appname) {
+    let { data: result } = await HttpRequest({ url: `/Private/api/value/AppInfo?app=${appname}` })
+    return result
+}
+const CreateValuePrivate = async function (appname) {
+    let { data: result } = await HttpRequest({
+        url: `/Private/api/value/CreateValue`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8', token: localStorage.getItem("WoolWebAdminToken") },
+        data: JSON.stringify({ app: appname })
+    })
+    return result
+}
+const UpdateValuePrivate = async function (appname, options) {
+    let { data: result } = await HttpRequest({
+        url: `/Private/api/value/UpdateValue`, method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            token: localStorage.getItem("WoolWebAdminToken")
+        },
+        data: JSON.stringify({ app: appname, options: options })
+    })
     return result
 }
 /**
@@ -121,14 +149,14 @@ const getWeb = async function () {
 /**
  * 上传变量
  */
-const up = async function (variable, value) {
+const up = async function (variable, value, envSplitor = "@") {
     let options = {
         url: "/Private/api/up",
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        data: JSON.stringify({ variable: variable, value: value })
+        data: JSON.stringify({ variable: variable, value: value, envSplitor: envSplitor })
     }
     let { data: result } = await HttpRequest(options)
     return result
