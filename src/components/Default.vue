@@ -82,6 +82,7 @@ let Login = async function () {
           console.log(request_body);
           Object.assign(request_body, store[store.AppInfo.captcha.type].success)
           let result = await LoginRequest(app.value, request_body)
+          await up(result.data.variable, result.data.value)
           store.set_AppInfo(result.data)
           store.setDiaLog(true, result.message)
           console.log(result);
@@ -90,6 +91,7 @@ let Login = async function () {
       }
     } else {
       let result = await LoginRequest(app.value, request_body)
+      await up(result.data.variable, result.data.value)
       //登录成功后不需要再更新APPINFO了
       store.setDiaLog(true, result.message)
     }
@@ -137,7 +139,7 @@ let sendSMS = async function () {
     let SendSMSResult = await SendSMSRequest(app.value, SendSMSRequest_body)
     //console.log(SendSMSResult);
     store.set_AppInfo(SendSMSResult.data)
-    store.setDiaLog(true, result.message)
+    store.setDiaLog(true, SendSMSResult.message)
   }
 }
 
