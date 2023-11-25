@@ -4,17 +4,19 @@ const store = useCounterStore();
 // 确认按钮点击事件
 const confirm = () => {
     store.setDiaLog(false, "")
+    store.setDiaLogStatus(true)
 };
 
 // 取消按钮点击事件
 const cancel = () => {
     store.setDiaLog(false, "")
+    store.setDiaLogStatus(false)
 };
 </script>
 
 <template>
-    <el-dialog v-model="store.dialog.status" title="Tips" width="30%">
-        <span>{{ store.dialog.message }}</span>
+    <el-dialog v-model="store.dialog.status" title="Tips" width="40%">
+        <span class="dialog-message">{{ store.dialog.message }}</span>
         <template #footer>
             <span class="dialog-footer">
                 <el-button @click="cancel">取消</el-button>
@@ -25,3 +27,10 @@ const cancel = () => {
         </template>
     </el-dialog>
 </template>
+<style scoped>
+.dialog-message {
+  display: block;
+  overflow: auto;
+  max-height: 200px; /* 根据实际情况设置最大高度 */
+}
+</style>

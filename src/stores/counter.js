@@ -78,7 +78,8 @@ export const useCounterStore = defineStore('counter', {
             },
             dialog: {
                 status: false,
-                message: ""
+                message: "",
+                dialogStatus: null,
             }
         }
     },
@@ -96,6 +97,9 @@ export const useCounterStore = defineStore('counter', {
         setDiaLog(status, message) {
             this.dialog.status = status
             this.dialog.message = message
+        },
+        setDiaLogStatus(status) {
+            this.dialog.dialogStatus = status
         },
         set_Admin(adminUsername, adminPassword) {
             this.admin.username = adminUsername

@@ -82,18 +82,31 @@ let Login = async function () {
           console.log(request_body);
           Object.assign(request_body, store[store.AppInfo.captcha.type].success)
           let result = await LoginRequest(app.value, request_body)
-          await up(result.data.variable, result.data.value)
           store.set_AppInfo(result.data)
-          store.setDiaLog(true, result.message)
+          store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+          const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
+            if (newVal == true) {
+              console.log("YES 上传青龙");
+              await up(result.data.variable, result.data.value)
+            }
+            unwatch1()
+
+          })
           console.log(result);
           unwatch()
         })
       }
     } else {
       let result = await LoginRequest(app.value, request_body)
-      await up(result.data.variable, result.data.value)
-      //登录成功后不需要再更新APPINFO了
-      store.setDiaLog(true, result.message)
+      store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+      const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
+        if (newVal == true) {
+          console.log("YES 上传青龙");
+          await up(result.data.variable, result.data.value)
+        }
+        unwatch1()
+      })
+      console.log(result);
     }
   }
 
