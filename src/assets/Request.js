@@ -1,5 +1,5 @@
 import HttpRequest from "./HttpRequest"
-export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest, AppListPrivate, AppInfoPrivate, CreateValuePrivate, UpdateValuePrivate }
+export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest, AppListPrivate, AppInfoPrivate, CreateValuePrivate, UpdateValuePrivate, GetQrCode,LoginQrCode }
 //顾名思义
 const AppList = async function (type) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppList?type=${type}` })
@@ -8,6 +8,14 @@ const AppList = async function (type) {
 //顾名思义
 const AppInfo = async function (appname) {
     let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppInfo?app=${appname}` })
+    return result
+}
+const GetQrCode = async function (appname) {
+    let { data: result } = await HttpRequest({ url: `/Public/api/QrCode/Get/${appname}` })
+    return result
+}
+const LoginQrCode = async function (appname, value) {
+    let { data: result } = await HttpRequest({ url: `/Public/api/QrCode/Login/${appname}?value=${value}` })
     return result
 }
 const AppListPrivate = async function () {

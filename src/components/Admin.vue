@@ -24,7 +24,9 @@
                             <el-radio label="new" size="large">大于>V2.11.X</el-radio>
                             <el-radio label="old" size="large">小于>V2.11.X</el-radio>
                         </el-radio-group>
+                        <br>
                         <el-button type="primary" @click="set_qinglong">修改</el-button>
+                        <el-button type="primary" @click="set_qinglong">连通测试</el-button>
                     </table>
                 </div>
             </el-tab-pane>

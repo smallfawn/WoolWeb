@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onBeforeMount, onMounted, watch } from "vue"
-import { AppList, AppInfo, SendSMSRequest, getWeb, up, LoginRequest, AppInfoPrivate, AppListPrivate } from "../assets/Request"
+import { AppList, AppInfo, SendSMSRequest, getWeb, up, LoginRequest, AppInfoPrivate, AppListPrivate, GetQrCode, LoginQrCode } from "../assets/Request"
 import Geetest3Captcha from "./Geetest3Captcha.vue";
 import TencentCaptcha from "./TencentCaptcha.vue";
 import YiDunCapacha from "./YiDunCapacha.vue";
@@ -11,7 +11,7 @@ import Notification from "./Notification.vue";
 import Message from "./Message.vue";
 const store = useCounterStore()
 //const router = useRouter();
-
+import QRCode from 'qrcode'
 let appList = ref([])
 let username = ref('');
 let password = ref('');
@@ -24,6 +24,8 @@ let value = ref("")
 let valueAppList = ref([])
 let valueTest = ref("")
 let valueEnvSplitor = ref("")
+const qrCodeImage = ref('')
+
 let selectedMethod = async function (type) {
   store.set_LoginType(type)
   //如果是自定义上传则不需要从总控获取APPLIST 而是从私有后端获取
@@ -36,7 +38,31 @@ let selectedMethod = async function (type) {
   }
 
 }
+let tips = ref('')
+let qrcodeValue = ref('')
+async function createQRCODE() {
 
+  let qrcodeResult = await GetQrCode(app.value)
+  if (qrcodeResult.data.type == "url") {
+    getQRCode(qrcodeResult.data.data)
+    qrcodeValue.value = qrcodeResult.data.value
+    tips.value = qrcodeResult.data.tips
+  }
+
+
+}
+let qrstatus = ref(true)
+function getQRCode(text) {
+  QRCode.toDataURL(text, { width: 200 })
+    .then(url => {
+      qrCodeImage.value = url
+      qrstatus.value = false
+      console.log(`获取二维码成功`);
+    })
+    .catch(err => {
+      console.error(err)
+    })
+}
 let Login = async function () {
   //检测输入框是否为空
   if (store.LoginType == "username") {
@@ -54,6 +80,18 @@ let Login = async function () {
   if (store.LoginType == "custom") {
     let result = await up(variable.value, value.value, valueEnvSplitor.value)
     store.setDiaLog(true, result.message)
+  } else if (store.LoginType == "qrcode") {
+    let result = await LoginQrCode(app.value, qrcodeValue.value)
+    console.log(result);
+    store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+    const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
+      if (newVal == true) {
+        console.log("YES 上传青龙");
+        await up(result.data.variable, result.data.value)
+      }
+      unwatch1()
+
+    })
   } else {
     //判断总控返回是否正常
     if (store.AppInfo == null || store.AppInfo == undefined) {
@@ -225,15 +263,20 @@ watch(app, async (newValue) => {
     variable.value = result.data.variable
   } else {
     result = await AppInfo(newValue)
-    store.set_AppInfo(result.data)
-    if (store.AppInfo.captcha !== null) {
-      console.log(`需要验证码`);
-      await setCaptcha(store.AppInfo.captcha.type)
-      store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+    if (result.data.default[0] == "qrcode") {
+
     } else {
-      store.set_NoCaptcha()
-      console.log(`不需要验证码`);
+      store.set_AppInfo(result.data)
+      if (store.AppInfo.captcha !== null) {
+        console.log(`需要验证码`);
+        await setCaptcha(store.AppInfo.captcha.type)
+        store.set_Captcha({ type: store.AppInfo.captcha.type, config: store.AppInfo.captcha.config })
+      } else {
+        store.set_NoCaptcha()
+        console.log(`不需要验证码`);
+      }
     }
+
   }
 
 });
@@ -243,6 +286,7 @@ watch(app, async (newValue) => {
 
 <template>
   <div class="">
+
     <div v-if="store.Notification.status">
       <Notification></Notification>
     </div>
@@ -277,10 +321,15 @@ watch(app, async (newValue) => {
       <el-button type="primary" @click="sendSMS">发送验证码</el-button>
     </div>
     <div v-if="store.LoginType == 'qrcode'">
-      <el-table v-loading="true" style="width: 100%">
-        <el-table-column prop="date" label="Date" width="180" />
-      </el-table>
-      <el-button type="primary" @click="">获取二维码</el-button>
+      {{ tips }}
+      <div v-if="qrstatus">
+        <el-table v-loading="true" style="width: 100%">
+        </el-table>
+      </div>
+      <div v-else>
+        <img :src="qrCodeImage" alt="QR Code" />
+      </div>
+      <el-button type="primary" @click="createQRCODE">获取/刷新 二维码</el-button>
     </div>
     <div v-if="store.LoginType == 'custom'">
       <span>变量名</span>
