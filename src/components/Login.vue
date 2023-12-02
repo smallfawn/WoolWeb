@@ -14,7 +14,7 @@
 import diaLog from "../components/Message.vue"
 import { ref, onBeforeMount, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
-import { Login_Admin,Register_Admin } from "../assets/Request"
+import { adminLogin,adminRegister } from "../assets/Request"
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const store = useCounterStore()
@@ -23,7 +23,7 @@ function showDialog(message) {
 };
 async function register() {
     console.log(store.admin.username, store.admin.password);
-    let result = await Register_Admin(store.admin.username, store.admin.password)
+    let result = await adminRegister(store.admin.username, store.admin.password)
     if (result.status == true) {
         showDialog(result.message)
     } else {
@@ -31,7 +31,7 @@ async function register() {
     }
 }
 async function login() {
-    let result = await Login_Admin(store.admin.username, store.admin.password)
+    let result = await adminLogin(store.admin.username, store.admin.password)
     if (result.status == true) {
         showDialog(result.message)
         localStorage.setItem("WoolWebAdminToken", result.data.token)

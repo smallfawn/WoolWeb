@@ -26,7 +26,7 @@ const Captcha_Config = {
 async function setCaptcha(type) {
     // 判断是否已经引入对应的ScriptUrl
     if (document.querySelector(`script[src="${Captcha_Config[type]["ScriptUrl"]}"]`)) {
-        console.log("Script already loaded");
+        //console.log("JS已存在,无需加载");
         return true
     } else {
         let script = document.createElement("script");

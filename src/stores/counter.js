@@ -11,7 +11,7 @@ export const useCounterStore = defineStore('counter', {
             },
             variable: "",
             value: "",
-            LoginType: '',
+            loginType: '',
             LoginElementId: "",
             Geetest3Captcha: {
                 success: {
@@ -40,7 +40,7 @@ export const useCounterStore = defineStore('counter', {
                     success: false
                 },
             },
-            AppInfo: {},
+            appInfo: {},
             username: "",
             password: "",
             TencentCaptcha: {
@@ -70,7 +70,7 @@ export const useCounterStore = defineStore('counter', {
             },
             AppName: "",
             CaptchaConfig: {},
-            mobile: "",
+            phone: "",
             code: "",
             admin: {
                 username: "",
@@ -105,15 +105,15 @@ export const useCounterStore = defineStore('counter', {
             this.admin.username = adminUsername
             this.admin.password = adminPassword
         },
-        set_LoginType(type) {
-            this.LoginType = type
+        set_loginType(type) {
+            this.loginType = type
         },
         set_UsernameAndPassword(options) {
             this.username = options.username
             this.password = options.password
         },
         set_MobileAndCode(options) {
-            this.mobile = options.mobile
+            this.phone = options.phone
             this.code = options.code
         },
         set_captcha_show(options) {
@@ -143,8 +143,8 @@ export const useCounterStore = defineStore('counter', {
         set_AppName(newValue) {
             this.AppName = newValue
         },
-        set_AppInfo(newValue) {
-            this.AppInfo = newValue
+        set_appInfo(newValue) {
+            this.appInfo = newValue
         }
     },
 })

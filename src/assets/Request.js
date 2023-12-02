@@ -1,43 +1,52 @@
 import HttpRequest from "./HttpRequest"
-export { AppList, AppInfo, Login_Admin, Register_Admin, get, set, getWeb, up, LoginRequest, SendSMSRequest, AppListPrivate, AppInfoPrivate, CreateValuePrivate, UpdateValuePrivate, GetQrCode,LoginQrCode }
-//顾名思义
-const AppList = async function (type) {
-    let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppList?type=${type}` })
+export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, valueApi, createValue, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong }
+const appsApi = async function (type, data) {
+    let { data: result } = await HttpRequest({ url: `/api/main/apps?type=${type}&data=${data}` })
     return result
 }
-//顾名思义
-const AppInfo = async function (appname) {
-    let { data: result } = await HttpRequest({ url: `/Public/api/Get/AppInfo?app=${appname}` })
+const qrcodeGetApi = async function (appname) {
+    let { data: result } = await HttpRequest({ url: `/api/main/qrcode/get?app=${appname}` })
     return result
 }
-const GetQrCode = async function (appname) {
-    let { data: result } = await HttpRequest({ url: `/Public/api/QrCode/Get/${appname}` })
+const qrcodeLoginApi = async function (appname, value) {
+    let options = {
+        url: `/api/main/qrcode/login`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        data: JSON.stringify({ app: appname, value: value })
+    }
+    let { data: result } = await HttpRequest(options)
     return result
 }
-const LoginQrCode = async function (appname, value) {
-    let { data: result } = await HttpRequest({ url: `/Public/api/QrCode/Login/${appname}?value=${value}` })
+
+const valueApi = async function (type, data) {
+    let { data: result } = await HttpRequest({ url: `/api/user/value?type=${type}&data=${data}` })
     return result
 }
-const AppListPrivate = async function () {
-    let { data: result } = await HttpRequest({ url: `/Private/api/value/AppList` })
-    return result
-}
-const AppInfoPrivate = async function (appname) {
-    let { data: result } = await HttpRequest({ url: `/Private/api/value/AppInfo?app=${appname}` })
-    return result
-}
-const CreateValuePrivate = async function (appname) {
+const createValue = async function (appname) {
     let { data: result } = await HttpRequest({
-        url: `/Private/api/value/CreateValue`,
+        url: `/api/user/value/create`,
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8', token: localStorage.getItem("WoolWebAdminToken") },
         data: JSON.stringify({ app: appname })
     })
     return result
 }
-const UpdateValuePrivate = async function (appname, options) {
+const testQingLong = async function (options) {
+    let url = options.url
+    let id = options.id
+    let secret = options.secret
     let { data: result } = await HttpRequest({
-        url: `/Private/api/value/UpdateValue`, method: 'POST',
+        url: `/api/user/test`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        data: JSON.stringify({ url: url, id: id, secret: secret })
+    })
+    return result
+}
+const updateValue = async function (appname, options) {
+    let { data: result } = await HttpRequest({
+        url: `/api/user/value/update`, method: 'POST',
         headers: {
             'Content-Type': 'application/json; charset=UTF-8',
             token: localStorage.getItem("WoolWebAdminToken")
@@ -48,13 +57,12 @@ const UpdateValuePrivate = async function (appname, options) {
 }
 /**
  * 发送短信通用API
- * @param {*} app APPNAME
  * @param {*} request_body 其他组件构建的body
  * @returns 
  */
-const SendSMSRequest = async function (app, request_body) {
+const sendSMSRequest = async function (request_body) {
     let options = {
-        url: `/Public/api/SendSMS/${app}`,
+        url: `/api/main/sms`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         data: JSON.stringify(request_body),
@@ -64,14 +72,13 @@ const SendSMSRequest = async function (app, request_body) {
 }
 /**
  * 登录通用API
- * @param {*} app APPNAME
  * @param {*} request_body 其他组件构建的body
  * @returns 
  */
-const LoginRequest = async function (app, request_body) {
+const loginRequest = async function (request_body) {
     console.log(request_body);
     let options = {
-        url: `/Public/api/Login/${app}`,
+        url: `/api/main/login`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         data: JSON.stringify(request_body),
@@ -85,9 +92,9 @@ const LoginRequest = async function (app, request_body) {
  * @param {*} password 密码
  * @returns token
  */
-const Login_Admin = async function (username, password) {
+const adminLogin = async function (username, password) {
     let options = {
-        url: "/Private/api/login",
+        url: "/api/user/login",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         data: JSON.stringify({ username: username, password: password }),
@@ -101,9 +108,9 @@ const Login_Admin = async function (username, password) {
  * @param {*} password 密码
  * @returns 状态
  */
-const Register_Admin = async function (username, password) {
+const adminRegister = async function (username, password) {
     let options = {
-        url: "/Private/api/register",
+        url: "/api/user/register",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         data: JSON.stringify({ username: username, password: password }),
@@ -116,9 +123,9 @@ const Register_Admin = async function (username, password) {
  * @param {*} variable 键
  * @returns 值
  */
-const get = async function (variable) {
+const adminGet = async function (variable) {
     let options = {
-        url: "/Private/api/get",
+        url: "/api/user/get",
         method: "POST",
         headers: { "Content-Type": "application/json", token: localStorage.getItem("WoolWebAdminToken") },
         data: JSON.stringify({ variable: variable }),
@@ -132,9 +139,9 @@ const get = async function (variable) {
  * @param {*} value 值
  * @returns 状态
  */
-const set = async function (variable, value) {
+const adminSet = async function (variable, value) {
     let options = {
-        url: "/Private/api/set",
+        url: "/api/user/set",
         method: "POST",
         headers: { "Content-Type": "application/json", token: localStorage.getItem("WoolWebAdminToken") },
         data: JSON.stringify({ variable: variable, value: value }),
@@ -148,7 +155,7 @@ const set = async function (variable, value) {
  */
 const getWeb = async function () {
     let options = {
-        url: "/Private/api/get/web",
+        url: "/api/user/init",
         method: "GET",
     }
     let { data: result } = await HttpRequest(options)
@@ -159,7 +166,7 @@ const getWeb = async function () {
  */
 const up = async function (variable, value, envSplitor = "@") {
     let options = {
-        url: "/Private/api/up",
+        url: "/api/user/up",
         method: "POST",
         headers: {
             "Content-Type": "application/json"

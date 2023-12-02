@@ -16,6 +16,8 @@
             <el-tab-pane label="青龙配置" name="second">
                 <div>
                     <table>
+                        先连通测试后修改
+                        <br>
                         <span>青龙Url: 例如http://127.0.0.1:5700</span><el-input v-model="qinglongInit.url"></el-input>
                         <span>青龙应用id: 青龙系统设置 应用设置</span><el-input v-model="qinglongInit.id"></el-input>
                         <span>青龙应用secret: 青龙系统设置 应用设置</span><el-input v-model="qinglongInit.secret"></el-input>
@@ -25,8 +27,9 @@
                             <el-radio label="old" size="large">小于>V2.11.X</el-radio>
                         </el-radio-group>
                         <br>
+                        <el-button type="primary" @click="test_qinglong">连通测试</el-button>
                         <el-button type="primary" @click="set_qinglong">修改</el-button>
-                        <el-button type="primary" @click="set_qinglong">连通测试</el-button>
+
                     </table>
                 </div>
             </el-tab-pane>
@@ -64,7 +67,9 @@
 import Message from "./Message.vue";
 import { ref, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
-import { get, set, AppInfoPrivate, AppListPrivate, CreateValuePrivate, UpdateValuePrivate } from "../assets/Request"
+import { adminGet, adminSet, valueApi, createValue, updateValue, testQingLong } from "../assets/Request"
+import { useRouter } from 'vue-router'
+const router = useRouter()
 let activeName = ref("first")
 let qinglongVersion = ref("")
 let appVariable = ref("")
@@ -80,7 +85,7 @@ let app = ref("")
 let createApp = ref("")
 
 async function set_qinglong() {
-    let result = await set("qinglong", {
+    let result = await adminSet("qinglong", {
         url: qinglongInit.value.url,
         id: qinglongInit.value.id,
         secret: qinglongInit.value.secret,
@@ -88,15 +93,25 @@ async function set_qinglong() {
     })
     store.setDiaLog(true, result.message)
 }
+async function test_qinglong() {
+    let options = {
+        url: qinglongInit.value.url,
+        id: qinglongInit.value.id,
+        secret: qinglongInit.value.secret
+    }
+    let result = await testQingLong(options)
+    console.log(result);
+    store.setDiaLog(true, result.message)
+}
 async function create_() {
-    let result = await CreateValuePrivate(createApp.value)
+    let result = await createValue(createApp.value)
     if (result.status == true) {
-        applist.value = (await AppListPrivate()).data
+        applist.value = (await valueApi("list", null)).data
     }
     store.setDiaLog(true, result.message)
 }
 async function search_() {
-    let result = await AppInfoPrivate(app.value)
+    let result = await valueApi("info", app.value)
     if (result.status == true) {
         appVariable.value = result.data.variable
         appTest.value = result.data.test
@@ -107,7 +122,7 @@ async function search_() {
 
 }
 async function update_() {
-    let result = await UpdateValuePrivate(app.value, {
+    let result = await updateValue(app.value, {
         variable: appVariable.value,
         test: appTest.value,
         regular: appRegular.value,
@@ -117,7 +132,7 @@ async function update_() {
     store.setDiaLog(true, result.message)
 }
 async function set_web() {
-    let result = await set("web", {
+    let result = await adminSet("web", {
         name: webInit.value.name,
         notice: webInit.value.notice
     })
@@ -129,8 +144,16 @@ watch(app, () => {
     search_()
 })
 onMounted(async () => {
-    let qinglong = await get("qinglong")
-    let web = await get("web")
+    if (localStorage.getItem("WoolWebAdminToken") == "" || localStorage.getItem("WoolWebAdminToken") == null || localStorage.getItem == undefined) {
+        store.setDiaLog(true, `未登录 即将跳转到登录页面`)
+        const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
+            router.push("/Login")
+            unwatch1()
+
+        })
+    }
+    let qinglong = await adminGet("qinglong")
+    let web = await adminGet("web")
     if (web.status == true) {
         webInit.value.name = web.data.name
         webInit.value.notice = web.data.notice
@@ -141,7 +164,7 @@ onMounted(async () => {
         qinglongInit.value.id = qinglong.data.id
         qinglongInit.value.secret = qinglong.data.secret
     }
-    applist.value = (await AppListPrivate()).data
+    applist.value = (await valueApi("list", null)).data
 })
 </script>
 <style scoped></style>
