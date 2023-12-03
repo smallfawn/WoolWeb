@@ -10,10 +10,14 @@ import Notification from "./Notification.vue";
 //import { useRouter } from 'vue-router';
 import DiaLog from "./DiaLog.vue";
 import Message from "./Message.vue";
-const store = useCounterStore()
-//const router = useRouter();
 import QRCode from 'qrcode'
 import { testPhoneNumber } from "../assets/Utils"
+let customValueTestText = ref(`格式校验中`)
+let isDisabled = ref(false);
+const store = useCounterStore()
+//const router = useRouter();
+let sendSMSText = ref(`发送验证码`)
+let sendSMSTime = ref(0)
 let testTips = ref("")
 let appList = ref([])
 let username = ref('');
@@ -22,11 +26,10 @@ let phone = ref('');
 let code = ref("")
 let app = ref("")
 let AppListResult = ref("")
+let customValueUpdateConfig = ref({})
 let variable = ref("")
 let value = ref("")
 let valueAppList = ref([])
-let valueTest = ref("")
-let valueEnvSplitor = ref("")
 let qrCodeImage = ref('')
 let qrstatus = ref(true)
 let tips = ref('')
@@ -35,7 +38,6 @@ let selectDefault = ref(`APP`)
 let selectedMethod = async function (type) {
   store.set_loginType(type)
   //如果是自定义上传则不需要从总控获取APPLIST 而是从私有后端获取
-
   if (store.loginType == "custom") {
     app.value = ""
     valueAppList.value = (await valueApi("list", null)).data
@@ -100,7 +102,9 @@ let login = async function () {
     }
   }
   if (store.loginType == "custom") {
-    let upResult = await up(variable.value, value.value, valueEnvSplitor.value)
+    /*if ( !== null)
+      let regexp = new RegExp("patternString");*/
+    let upResult = await up(customValueUpdateConfig.value.variable, value.value, customValueUpdateConfig.value.envSplitor)
     if (upResult.status == true) {
       store.set_Message(true, upResult.message, "success")
     } else {
@@ -116,7 +120,7 @@ let login = async function () {
       //store.setDiaLog(true, result.message)
       store.set_Message(true, result.message, "error")
     }
-    const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
+    const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
       //console.log(newVal);
       if (store.dialog.dialogStatus == true) {
         console.log("YES 上传青龙");
@@ -127,13 +131,14 @@ let login = async function () {
           store.set_Message(true, upResult.message, "error")
         }
       }
-      unwatch1()
+      watchDialog()
     })
   } else {
     //判断总控返回是否正常
     if (store.appInfo == null || store.appInfo == undefined) {
       return
     }
+    let loginResult
     let request_body = new Object()
     Object.assign(request_body, { app: app.value })
     //console.log(store.appInfo.type);
@@ -162,34 +167,34 @@ let login = async function () {
         //1.在创建验证码后给store一个captchaIsSuccess 默认0  验证码成功后 设置为1 然后侦听captchaIsSuccess 如果为1则 构建请求
         //该方法无需根据后端返回null的情况而找不到type从而找不到对应验证码状态的store,但是需要考虑无需验证码时和返回null时
         //还需要考虑 这个方法是否影响全局 比如重新选择APP时 和重新登录账号时 是否重新获取appInfo和captchaIsSuccess
-        const unwatch = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
+        const watchCaptcha = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
           //构建请求体
           console.log(`验证码通过`);
-          console.log(request_body);
+          //console.log(request_body);
           Object.assign(request_body, { captcha: store[store.appInfo.captcha.type].success })
-          let result = await loginRequest(request_body)
-          if (result.status == true) {
-            store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+          loginResult = await loginRequest(request_body)
+          if (loginResult.status == true) {
+            store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(loginResult.data.value)}`)
           } else {
-            //store.setDiaLog(true, result.message)
-            store.set_Message(true, result.message, "error")
+            store.set_Message(true, loginResult.message, "error")
           }
-          await RefreshAppInfo(2)
-          const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
-            //console.log(newVal);
+          //console.log(loginResult);
+          watchCaptcha()
+          const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
+            //console.log(`弹窗状态改变`);
+            //console.log(store.dialog.dialogStatus);
             if (store.dialog.dialogStatus == true) {
               console.log("YES 上传青龙");
-              let upResult = await up(result.data.variable, result.data.value)
+              let upResult = await up(loginResult.data.variable, loginResult.data.value)
               if (upResult.status == true) {
                 store.set_Message(true, upResult.message, "success")
               } else {
                 store.set_Message(true, upResult.message, "error")
               }
             }
-            unwatch1()
+            watchDialog()
           })
-          console.log(result);
-          unwatch()
+          await RefreshAppInfo(2)
         })
       }
     } else {
@@ -197,13 +202,11 @@ let login = async function () {
       let result = await loginRequest(request_body)
       if (result.status == true) {
         store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
-
       } else {
-        //store.setDiaLog(true, result.message)
         store.set_Message(true, result.message, "error")
       }
       await RefreshAppInfo(2)
-      const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
+      const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
         //console.log(newVal);
         if (store.dialog.dialogStatus == true) {
           console.log("YES 上传青龙");
@@ -214,10 +217,9 @@ let login = async function () {
             store.set_Message(true, upResult.message, "error")
           }
         }
-        unwatch1()
+        watchDialog()
       })
 
-      console.log(result);
     }
   }
 
@@ -256,34 +258,35 @@ let sendSMS = async function () {
       /*console.log(store.appInfo.captcha);//验证码配置
       console.log(store.appInfo.captcha.type);
       console.log(store[store.appInfo.captcha.type].status.success);//验证码状态*/
-      const unwatch = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
+      const watchCaptcha = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
         // 在这里执行相关逻辑
         console.log(`验证码通过`);
-        console.log(sendSMSRequest_body);
+        //console.log(sendSMSRequest_body);
         Object.assign(sendSMSRequest_body, { captcha: store[store.appInfo.captcha.type].success })
         let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
-        console.log(SendSMSResult);
+        //console.log(SendSMSResult);
         store.set_appInfo(SendSMSResult.data)
         //store.setDiaLog(true, SendSMSResult.message)
         if (SendSMSResult.status == true) {
           store.set_Message(true, SendSMSResult.message, "success")
+          time60()
         } else {
           store.set_Message(true, SendSMSResult.message, "error")
         }
         if (SendSMSResult.data.captcha == null) {
-          unwatch()
+          watchCaptcha()
           //卸载监视
         }
+
       })
     }
   } else {
     Object.assign(sendSMSRequest_body, { captcha: null })
     let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
-    //console.log(SendSMSResult);
     store.set_appInfo(SendSMSResult.data)
-    //store.setDiaLog(true, SendSMSResult.message)
     if (SendSMSResult.status == true) {
       store.set_Message(true, SendSMSResult.message, "success")
+      time60()
     } else {
       store.set_Message(true, SendSMSResult.message, "error")
     }
@@ -303,8 +306,17 @@ onBeforeMount(async () => {
 })
 
 watch(value, async (newValue, oldValue) => {
-
   store.set_custom(variable.value, newValue)
+  if (customValueUpdateConfig.value.regular !== null) {
+    let regexp = new RegExp(customValueUpdateConfig.value.regular)
+    console.log(regexp);
+    if (regexp.test(newValue)) {
+      customValueTestText.value = `格式校验通过`
+    } else {
+      customValueTestText.value = `格式校验错误`
+    }
+  }
+
 })
 
 watch(() => [username.value, password.value], async (newValue, oldValue) => {
@@ -334,7 +346,6 @@ watch(() => [phone.value, code.value], async (newValue, oldValue) => {
   } else {
     testTips.value = `请输入正确格式的手机号`
   }
-
 })
 
 watch(app, async (newValue) => {
@@ -344,12 +355,10 @@ watch(app, async (newValue) => {
     let result
     if (store.loginType == "custom") {
       result = await valueApi("info", newValue)
-      valueTest.value = result.data.test
-      valueEnvSplitor.value = result.data.envSplitor
-      variable.value = result.data.variable
+      customValueUpdateConfig.value = result.data
+      console.log(customValueUpdateConfig.value);
     } else {
       await RefreshAppInfo(1)
-
     }
 
   }
@@ -385,6 +394,20 @@ async function RefreshAppInfo(times) {
       console.log(`No Captcha`);
     }
   }
+}
+function time60() {
+  isDisabled.value = true
+  sendSMSTime.value = 60;
+  const timer = setInterval(() => {
+    if (sendSMSTime.value > 0) {
+      sendSMSTime.value--;
+      sendSMSText.value = `${sendSMSTime.value}s`;
+    } else {
+      isDisabled.value = false
+      clearInterval(timer);
+      sendSMSText.value = "发送验证码";
+    }
+  }, 1000);
 }
 </script>
 
@@ -423,9 +446,13 @@ async function RefreshAppInfo(times) {
     </div>
     <div v-if="store.loginType == 2">
       <div>{{ testTips }}</div>
-      <el-input type="text" v-model="phone" placeholder="手机号" />
-      <el-input type="text" v-model="code" placeholder="验证码" />
-      <el-button type="primary" @click="sendSMS">发送验证码</el-button>
+      <div class="sendsms-container">
+        <el-input type="text" v-model="phone" placeholder="手机号"></el-input>
+        <div class="flex-container">
+          <el-input type="text" v-model="code" placeholder="验证码"></el-input>
+          <el-button type="default" :disabled="isDisabled" @click="sendSMS">{{ sendSMSText }}</el-button>
+        </div>
+      </div>
     </div>
     <div v-if="store.loginType == 3">
       {{ tips }}
@@ -441,11 +468,11 @@ async function RefreshAppInfo(times) {
     <div v-if="store.loginType == 'custom'">
       <span>变量名</span>
       <br>
-      <span>示例</span>
+      <div v-if="customValueUpdateConfig.regular !== null"><span>{{ customValueTestText }}</span></div>
       <br>
       <span>
-        {{ valueTest }}
-      </span><el-input type="text" v-model="variable" disabled placeholder="变量名" />
+        {{ customValueUpdateConfig.test }}
+      </span><el-input type="text" v-model="customValueUpdateConfig.variable" disabled placeholder="变量名" />
       <span>变量值</span><el-input type="text" v-model="value" placeholder="变量值" />
     </div>
     <br>
@@ -463,4 +490,15 @@ async function RefreshAppInfo(times) {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.sendsms-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>

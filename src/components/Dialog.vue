@@ -6,6 +6,7 @@ const store = useCounterStore();
 const confirm = () => {
     store.setDiaLogStatus(true);
     store.setDiaLog(false, "")
+
 };
 
 // 取消按钮点击事件

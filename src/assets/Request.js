@@ -76,7 +76,7 @@ const sendSMSRequest = async function (request_body) {
  * @returns 
  */
 const loginRequest = async function (request_body) {
-    console.log(request_body);
+    //console.log(request_body);
     let options = {
         url: `/api/main/login`,
         method: "POST",
