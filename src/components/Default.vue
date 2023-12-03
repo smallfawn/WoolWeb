@@ -8,6 +8,7 @@ import { useCounterStore } from "../stores/counter";
 import { setCaptcha } from "../assets/Captcha";
 import Notification from "./Notification.vue";
 //import { useRouter } from 'vue-router';
+import DiaLog from "./DiaLog.vue";
 import Message from "./Message.vue";
 const store = useCounterStore()
 //const router = useRouter();
@@ -58,7 +59,8 @@ async function createQRCODE() {
       tips.value = qrcodeResult.data.tips
     }
   } else {
-    store.setDiaLog(true, `请先选择App`)
+    //store.setDiaLog(true, `请先选择App`)
+    store.set_Message(true, "请先选择App", "error")
   }
 }
 function getQRCode(text) {
@@ -74,40 +76,55 @@ function getQRCode(text) {
 }
 let login = async function () {
   if (app.value == "" || store.appInfo == {}) {
-    return store.setDiaLog(true, `请选择对应的App`)
+    store.set_Message(true, "请选择对应的App", "error")
+    return //store.setDiaLog(true, `请选择对应的App`)
   }
   //检测输入框是否为空
   if (store.loginType == 1) {
     if (username.value == "") {
-      store.setDiaLog(true, "请输入账号")
+      store.set_Message(true, "请输入账号", "error")
+      //store.setDiaLog(true, "请输入账号")
       return
     }
   }
   if (store.loginType == 2) {
     if (phone.value == "") {
-      store.setDiaLog(true, "请输入手机号")
+      //store.setDiaLog(true, "请输入手机号")
+      store.set_Message(true, "请输入手机号", "error")
       return
     } else {
       if (testPhoneNumber(store.phone) !== true) {
-        return store.setDiaLog(true, `请输入正确的手机号`)
+        store.set_Message(true, "请输入正确的手机号", "error")
+        return //store.setDiaLog(true, `请输入正确的手机号`)
       }
     }
   }
   if (store.loginType == "custom") {
-    let result = await up(variable.value, value.value, valueEnvSplitor.value)
-    store.setDiaLog(true, result.message)
+    let upResult = await up(variable.value, value.value, valueEnvSplitor.value)
+    if (upResult.status == true) {
+      store.set_Message(true, upResult.message, "success")
+    } else {
+      store.set_Message(true, upResult.message, "error")
+    }
+    //store.setDiaLog(true, result.message)
   } else if (store.loginType == 3) {
     let result = await qrcodeLoginApi(app.value, qrcodeValue.value)
     //console.log(result);
     if (result.status == true) {
       store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
     } else {
-      store.setDiaLog(true, result.message)
+      //store.setDiaLog(true, result.message)
+      store.set_Message(true, result.message, "error")
     }
     const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
       if (newVal == true) {
         console.log("YES 上传青龙");
-        await up(result.data.variable, result.data.value)
+        let upResult = await up(result.data.variable, result.data.value)
+        if (upResult.status == true) {
+          store.set_Message(true, upResult.message, "success")
+        } else {
+          store.set_Message(true, upResult.message, "error")
+        }
       }
       unwatch1()
     })
@@ -118,6 +135,7 @@ let login = async function () {
     }
     let request_body = new Object()
     Object.assign(request_body, { app: app.value })
+    //console.log(store.appInfo.type);
     if (store.appInfo.type == 1) {
       let defaultBody = ["username", "password"]
       for (let key of defaultBody) {
@@ -153,12 +171,18 @@ let login = async function () {
             store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
 
           } else {
-            store.setDiaLog(true, result.message)
+            //store.setDiaLog(true, result.message)
+            store.set_Message(true, result.message, "error")
           }
           const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
             if (newVal == true) {
               console.log("YES 上传青龙");
-              await up(result.data.variable, result.data.value)
+              let upResult = await up(result.data.variable, result.data.value)
+              if (upResult.status == true) {
+                store.set_Message(true, upResult.message, "success")
+              } else {
+                store.set_Message(true, upResult.message, "error")
+              }
             }
             unwatch1()
           })
@@ -172,12 +196,18 @@ let login = async function () {
       if (result.status == true) {
         store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
       } else {
-        store.setDiaLog(true, result.message)
+        //store.setDiaLog(true, result.message)
+        store.set_Message(true, result.message, "error")
       }
       const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
         if (newVal == true) {
           console.log("YES 上传青龙");
-          await up(result.data.variable, result.data.value)
+          let upResult = await up(result.data.variable, result.data.value)
+          if (upResult.status == true) {
+            store.set_Message(true, upResult.message, "success")
+          } else {
+            store.set_Message(true, upResult.message, "error")
+          }
         }
         unwatch1()
       })
@@ -189,10 +219,12 @@ let login = async function () {
 
 let sendSMS = async function () {
   if (app.value == "" || store.appInfo == {}) {
-    return store.setDiaLog(true, `请选择对应的App`)
+    store.set_Message(true,`请选择对应的App`, "error")
+    return //store.setDiaLog(true, `请选择对应的App`)
   }
   if (testPhoneNumber(store.phone) !== true) {
-    return store.setDiaLog(true, `请输入正确的手机号`)
+    store.set_Message(true,`请输入正确的手机号`, "error")
+    return //store.setDiaLog(true, `请输入正确的手机号`)
   }
   if (store.appInfo == null || store.appInfo == undefined) {
     return
@@ -226,7 +258,12 @@ let sendSMS = async function () {
         let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
         console.log(SendSMSResult);
         store.set_appInfo(SendSMSResult.data)
-        store.setDiaLog(true, SendSMSResult.message)
+        //store.setDiaLog(true, SendSMSResult.message)
+        if (SendSMSResult.status == true) {
+          store.set_Message(true, SendSMSResult.message, "success")
+        } else {
+          store.set_Message(true, SendSMSResult.message, "error")
+        }
         if (SendSMSResult.data.captcha == null) {
           unwatch()
           //卸载监视
@@ -238,7 +275,12 @@ let sendSMS = async function () {
     let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
     //console.log(SendSMSResult);
     store.set_appInfo(SendSMSResult.data)
-    store.setDiaLog(true, SendSMSResult.message)
+    //store.setDiaLog(true, SendSMSResult.message)
+    if (SendSMSResult.status == true) {
+      store.set_Message(true, SendSMSResult.message, "success")
+    } else {
+      store.set_Message(true, SendSMSResult.message, "error")
+    }
   }
 }
 
@@ -300,6 +342,7 @@ watch(() => [phone.value, code.value], async (newValue, oldValue) => {
       phone: newValue[0],
       code: newValue[1]
     })
+    testTips.value = ``
   } else {
     testTips.value = `请输入正确格式的手机号`
   }
@@ -321,6 +364,7 @@ watch(app, async (newValue) => {
       if (result.data.type == 3) {
       } else {
         store.set_appInfo(result.data)
+        //console.log(store.appInfo.type);
         if (store.appInfo.captcha !== null) {
           console.log(`需要验证码`);
           await setCaptcha(store.appInfo.captcha.type)
@@ -342,12 +386,14 @@ watch(app, async (newValue) => {
 
 <template>
   <div class="">
-
+    <div v-if="store.Message.status">
+      <Message></Message>
+    </div>
     <div v-if="store.Notification.status">
       <Notification></Notification>
     </div>
     <div v-if="store.dialog.status">
-      <Message></Message>
+      <DiaLog></DiaLog>
     </div>
     <div>
       <el-button type="primary" @click="selectedMethod(`1`)">密码登录</el-button>

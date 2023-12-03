@@ -9,6 +9,11 @@ export const useCounterStore = defineStore('counter', {
                 message: "",
                 title: "",
             },
+            Message: {
+                status: false,
+                message: "",
+                type: "success",
+            },
             variable: "",
             value: "",
             loginType: '',
@@ -97,6 +102,12 @@ export const useCounterStore = defineStore('counter', {
         setDiaLog(status, message) {
             this.dialog.status = status
             this.dialog.message = message
+        },
+        set_Message(status, message, type = "success") {
+            //succeess warning error  //message
+            this.Message.status = status
+            this.Message.message = message
+            this.Message.type = type
         },
         setDiaLogStatus(status) {
             this.dialog.dialogStatus = status

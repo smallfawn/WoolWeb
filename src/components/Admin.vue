@@ -1,8 +1,12 @@
 <template>
     <div>
-        <div v-if="store.dialog.status">
+        <div v-if="store.Message.status">
             <Message></Message>
         </div>
+        <div v-if="store.dialog.status">
+            <Dialog></Dialog>
+        </div>
+
         <el-tabs v-model="activeName" @tab-click="">
             <el-tab-pane label="网站配置" name="first">
                 <div>
@@ -69,6 +73,7 @@ import { ref, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
 import { adminGet, adminSet, valueApi, createValue, updateValue, testQingLong } from "../assets/Request"
 import { useRouter } from 'vue-router'
+import Dialog from "./DiaLog.vue";
 const router = useRouter()
 let activeName = ref("first")
 let qinglongVersion = ref("")
@@ -91,7 +96,12 @@ async function set_qinglong() {
         secret: qinglongInit.value.secret,
         version: qinglongVersion.value
     })
-    store.setDiaLog(true, result.message)
+    if (result.status == true) {
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
+    }
+    //store.setDiaLog(true, result.message)
 }
 async function test_qinglong() {
     let options = {
@@ -101,14 +111,22 @@ async function test_qinglong() {
     }
     let result = await testQingLong(options)
     console.log(result);
-    store.setDiaLog(true, result.message)
+    if (result.status == true) {
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
+    }
+    //store.setDiaLog(true, result.message)
 }
 async function create_() {
     let result = await createValue(createApp.value)
     if (result.status == true) {
         applist.value = (await valueApi("list", null)).data
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
     }
-    store.setDiaLog(true, result.message)
+    //store.setDiaLog(true, result.message)
 }
 async function search_() {
     let result = await valueApi("info", app.value)
@@ -118,7 +136,11 @@ async function search_() {
         appRegular.value = result.data.regular
         appStrSplitor.value = result.data.strSplitor
         appEnvSplitor.value = result.data.envSplitor
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
     }
+
 
 }
 async function update_() {
@@ -129,14 +151,24 @@ async function update_() {
         strSplitor: appStrSplitor.value,
         envSplitor: appEnvSplitor.value
     })
-    store.setDiaLog(true, result.message)
+    if (result.status == true) {
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
+    }
+    //store.setDiaLog(true, result.message)
 }
 async function set_web() {
     let result = await adminSet("web", {
         name: webInit.value.name,
         notice: webInit.value.notice
     })
-    store.setDiaLog(true, result.message)
+    if (result.status == true) {
+        store.set_Message(true, result.message, "success")
+    } else {
+        store.set_Message(true, result.message, "error")
+    }
+    //store.setDiaLog(true, result.message)
 }
 
 
@@ -145,7 +177,8 @@ watch(app, () => {
 })
 onMounted(async () => {
     if (localStorage.getItem("WoolWebAdminToken") == "" || localStorage.getItem("WoolWebAdminToken") == null || localStorage.getItem == undefined) {
-        store.setDiaLog(true, `未登录 即将跳转到登录页面`)
+        //store.setDiaLog(true, `未登录 即将跳转到登录页面`)
+        store.set_Message(true, "未登录 即将跳转到登录页面")
         const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
             router.push("/Login")
             unwatch1()
