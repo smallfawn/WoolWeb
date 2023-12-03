@@ -37,7 +37,7 @@ onMounted(() => {
             }).onError(function () {
                 //your code
             })
-             const Geetest3CaptchaShow = function () {
+            const Geetest3CaptchaShow = function () {
                 captchaObj.verify()
             }
             store.set_captcha_show({ type: "Geetest3Captcha", show: Geetest3CaptchaShow })

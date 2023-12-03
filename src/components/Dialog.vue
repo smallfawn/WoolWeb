@@ -4,10 +4,8 @@ const store = useCounterStore();
 //let unwatch1 = null
 // 确认按钮点击事件
 const confirm = () => {
-    if (store.dialog.status) {
-        store.setDiaLogStatus(true);
-        store.setDiaLog(false, "")
-    }
+    store.setDiaLogStatus(true);
+    store.setDiaLog(false, "")
 };
 
 // 取消按钮点击事件

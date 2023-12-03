@@ -78,7 +78,7 @@ onMounted(() => {
             const TencentCaptchaShow = function () {
                 captcha.show();
             }
-            store.set_captcha_show({ type: 'TencentCaptcha', show: TencentCaptchaShow})
+            store.set_captcha_show({ type: 'TencentCaptcha', show: TencentCaptchaShow })
         } catch (error) {
             // 加载异常，调用验证码js加载错误处理函数
             loadErrorCallback();

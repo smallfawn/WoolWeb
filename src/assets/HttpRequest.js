@@ -9,4 +9,4 @@ function httpRequest(options) {
         })
     })
 }
-export default  httpRequest 
+export default httpRequest 
