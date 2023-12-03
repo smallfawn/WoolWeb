@@ -179,11 +179,12 @@ onMounted(async () => {
     if (localStorage.getItem("WoolWebAdminToken") == "" || localStorage.getItem("WoolWebAdminToken") == null || localStorage.getItem == undefined) {
         //store.setDiaLog(true, `未登录 即将跳转到登录页面`)
         store.set_Message(true, "未登录 即将跳转到登录页面")
-        const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
+        router.push("/Login")
+        /*const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
             router.push("/Login")
             unwatch1()
 
-        })
+        })*/
     }
     let qinglong = await adminGet("qinglong")
     let web = await adminGet("web")

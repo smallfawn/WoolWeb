@@ -1,16 +1,23 @@
 <script setup>
 import { useCounterStore } from "../stores/counter";
 const store = useCounterStore();
+//let unwatch1 = null
 // 确认按钮点击事件
 const confirm = () => {
-    store.setDiaLog(false, "")
-    store.setDiaLogStatus(true)
+    if (store.dialog.status) {
+        store.setDiaLogStatus(true);
+        store.setDiaLog(false, "")
+    }
 };
 
 // 取消按钮点击事件
 const cancel = () => {
-    store.setDiaLog(false, "")
     store.setDiaLogStatus(false)
+    store.setDiaLog(false, "")
+    /*if (unwatch1) {
+        unwatch1()
+        unwatch1 = null // 将 unwatch1 置空
+    }*/
 };
 </script>
 
@@ -29,8 +36,9 @@ const cancel = () => {
 </template>
 <style scoped>
 .dialog-message {
-  display: block;
-  overflow: auto;
-  max-height: 200px; /* 根据实际情况设置最大高度 */
+    display: block;
+    overflow: auto;
+    max-height: 200px;
+    /* 根据实际情况设置最大高度 */
 }
 </style>

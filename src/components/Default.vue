@@ -116,8 +116,9 @@ let login = async function () {
       //store.setDiaLog(true, result.message)
       store.set_Message(true, result.message, "error")
     }
-    const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
-      if (newVal == true) {
+    const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
+      //console.log(newVal);
+      if (store.dialog.dialogStatus == true) {
         console.log("YES 上传青龙");
         let upResult = await up(result.data.variable, result.data.value)
         if (upResult.status == true) {
@@ -169,13 +170,14 @@ let login = async function () {
           let result = await loginRequest(request_body)
           if (result.status == true) {
             store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
-
           } else {
             //store.setDiaLog(true, result.message)
             store.set_Message(true, result.message, "error")
           }
-          const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
-            if (newVal == true) {
+          await RefreshAppInfo(2)
+          const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
+            //console.log(newVal);
+            if (store.dialog.dialogStatus == true) {
               console.log("YES 上传青龙");
               let upResult = await up(result.data.variable, result.data.value)
               if (upResult.status == true) {
@@ -195,12 +197,15 @@ let login = async function () {
       let result = await loginRequest(request_body)
       if (result.status == true) {
         store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+
       } else {
         //store.setDiaLog(true, result.message)
         store.set_Message(true, result.message, "error")
       }
-      const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
-        if (newVal == true) {
+      await RefreshAppInfo(2)
+      const unwatch1 = watch(() => store.dialog.status, async (newVal, oldVal) => {
+        //console.log(newVal);
+        if (store.dialog.dialogStatus == true) {
           console.log("YES 上传青龙");
           let upResult = await up(result.data.variable, result.data.value)
           if (upResult.status == true) {
@@ -211,6 +216,7 @@ let login = async function () {
         }
         unwatch1()
       })
+
       console.log(result);
     }
   }
@@ -219,11 +225,11 @@ let login = async function () {
 
 let sendSMS = async function () {
   if (app.value == "" || store.appInfo == {}) {
-    store.set_Message(true,`请选择对应的App`, "error")
+    store.set_Message(true, `请选择对应的App`, "error")
     return //store.setDiaLog(true, `请选择对应的App`)
   }
   if (testPhoneNumber(store.phone) !== true) {
-    store.set_Message(true,`请输入正确的手机号`, "error")
+    store.set_Message(true, `请输入正确的手机号`, "error")
     return //store.setDiaLog(true, `请输入正确的手机号`)
   }
   if (store.appInfo == null || store.appInfo == undefined) {
@@ -305,16 +311,7 @@ watch(() => [username.value, password.value], async (newValue, oldValue) => {
   if (oldValue[0] !== "" && newValue[0] == "") {
     //猜测用户可能重新登录
     //重新get app info
-    let result = await appsApi("info", store.AppName)
-    store.set_appInfo(result.data)
-    if (store.appInfo.captcha !== null) {
-      console.log(`需要验证码`);
-      await setCaptcha(store.appInfo.captcha.type)
-      store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
-    } else {
-      store.set_NoCaptcha()
-      console.log(`不需要验证码`);
-    }
+    await RefreshAppInfo(2)
   }
   store.set_UsernameAndPassword({
     username: newValue[0],
@@ -326,16 +323,7 @@ watch(() => [phone.value, code.value], async (newValue, oldValue) => {
     //行为判断
     //猜测用户可能重新登录
     //重新get app info
-    let result = await appsApi("info", store.AppName)
-    store.set_appInfo(result.data)
-    if (store.appInfo.captcha !== null) {
-      console.log(`需要验证码`);
-      await setCaptcha(store.appInfo.captcha.type)
-      store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
-    } else {
-      store.set_NoCaptcha()
-      console.log(`不需要验证码`);
-    }
+    await RefreshAppInfo(2)
   }
   if (testPhoneNumber(newValue[0]) == true) {
     store.set_MobileAndCode({
@@ -360,20 +348,7 @@ watch(app, async (newValue) => {
       valueEnvSplitor.value = result.data.envSplitor
       variable.value = result.data.variable
     } else {
-      result = await appsApi("info", newValue)
-      if (result.data.type == 3) {
-      } else {
-        store.set_appInfo(result.data)
-        //console.log(store.appInfo.type);
-        if (store.appInfo.captcha !== null) {
-          console.log(`需要验证码`);
-          await setCaptcha(store.appInfo.captcha.type)
-          store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
-        } else {
-          store.set_NoCaptcha()
-          console.log(`不需要验证码`);
-        }
-      }
+      await RefreshAppInfo(1)
 
     }
 
@@ -381,7 +356,36 @@ watch(app, async (newValue) => {
 
 });
 
-
+async function RefreshAppInfo(times) {
+  let appInfoResult = await appsApi("info", app.value)
+  if (times == 1) {
+    //首次
+    if (appInfoResult.data.type == 3) {
+    } else {
+      store.set_appInfo(appInfoResult.data)
+      //console.log(store.appInfo.type);
+      if (store.appInfo.captcha !== null) {
+        console.log(`Need Captcha`);
+        await setCaptcha(store.appInfo.captcha.type)
+        store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
+      } else {
+        store.set_NoCaptcha()
+        console.log(`No Captcha`);
+      }
+    }
+  } else if (times == 2) {
+    //登录后重新获取 //防止验证码失效
+    console.log(`重新获取APPINFO`);
+    store.set_appInfo(appInfoResult.data)
+    if (store.appInfo.captcha !== null) {
+      console.log(`Need Captcha`);
+      store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
+    } else {
+      store.set_NoCaptcha()
+      console.log(`No Captcha`);
+    }
+  }
+}
 </script>
 
 <template>
