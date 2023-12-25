@@ -12,6 +12,11 @@ import DiaLog from "./DiaLog.vue";
 import Message from "./Message.vue";
 import QRCode from 'qrcode'
 import { testPhoneNumber } from "../assets/Utils"
+let isUpdate = ref(true)
+let remark = ref("")
+watch(isUpdate, (newVal, oldVal) => {
+  console.log(newVal);
+})
 let customValueTestText = ref(`格式校验中`)
 let isDisabled = ref(false);
 const store = useCounterStore()
@@ -59,9 +64,12 @@ async function createQRCODE() {
       getQRCode(qrcodeResult.data.data)
       qrcodeValue.value = qrcodeResult.data.value
       tips.value = qrcodeResult.data.tips
+    } else if (qrcodeResult.data.type == "base64") {
+      qrCodeImage.value = qrcodeResult.data.data
+      qrcodeValue.value = qrcodeResult.data.value
+      tips.value = qrcodeResult.data.tips
     }
   } else {
-    //store.setDiaLog(true, `请先选择App`)
     store.set_Message(true, "请先选择App", "error")
   }
 }
@@ -79,60 +87,51 @@ function getQRCode(text) {
 let login = async function () {
   if (app.value == "" || store.appInfo == {}) {
     store.set_Message(true, "请选择对应的App", "error")
-    return //store.setDiaLog(true, `请选择对应的App`)
   }
   //检测输入框是否为空
   if (store.loginType == 1) {
     if (username.value == "") {
       store.set_Message(true, "请输入账号", "error")
-      //store.setDiaLog(true, "请输入账号")
       return
     }
   }
   if (store.loginType == 2) {
     if (phone.value == "") {
-      //store.setDiaLog(true, "请输入手机号")
       store.set_Message(true, "请输入手机号", "error")
       return
     } else {
       if (testPhoneNumber(store.phone) !== true) {
         store.set_Message(true, "请输入正确的手机号", "error")
-        return //store.setDiaLog(true, `请输入正确的手机号`)
+        return
       }
     }
   }
   if (store.loginType == "custom") {
     /*if ( !== null)
       let regexp = new RegExp("patternString");*/
-    let upResult = await up(customValueUpdateConfig.value.variable, value.value, customValueUpdateConfig.value.envSplitor)
+    let upResult = await up(store.loginType, customValueUpdateConfig.value.variable, value.value, remark.value, customValueUpdateConfig.value.envSplitor)
     if (upResult.status == true) {
       store.set_Message(true, upResult.message, "success")
     } else {
       store.set_Message(true, upResult.message, "error")
     }
-    //store.setDiaLog(true, result.message)
   } else if (store.loginType == 3) {
     let result = await qrcodeLoginApi(app.value, qrcodeValue.value)
     //console.log(result);
     if (result.status == true) {
-      store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+      store.setDiaLog(true, `获取变量成功${JSON.stringify(result.data.value)}`)
     } else {
-      //store.setDiaLog(true, result.message)
       store.set_Message(true, result.message, "error")
     }
-    const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
-      //console.log(newVal);
-      if (store.dialog.dialogStatus == true) {
-        console.log("YES 上传青龙");
-        let upResult = await up(result.data.variable, result.data.value)
-        if (upResult.status == true) {
-          store.set_Message(true, upResult.message, "success")
-        } else {
-          store.set_Message(true, upResult.message, "error")
-        }
+    if (isUpdate.value == true) {
+      console.log("YES 上传青龙");
+      let upResult = await up(store.loginType, result.data.variable, result.data.value, remark.value)
+      if (upResult.status == true) {
+        store.set_Message(true, upResult.message, "success")
+      } else {
+        store.set_Message(true, upResult.message, "error")
       }
-      watchDialog()
-    })
+    }
   } else {
     //判断总控返回是否正常
     if (store.appInfo == null || store.appInfo == undefined) {
@@ -169,31 +168,25 @@ let login = async function () {
         //还需要考虑 这个方法是否影响全局 比如重新选择APP时 和重新登录账号时 是否重新获取appInfo和captchaIsSuccess
         const watchCaptcha = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
           //构建请求体
-          console.log(`验证码通过`);
           //console.log(request_body);
           Object.assign(request_body, { captcha: store[store.appInfo.captcha.type].success })
           loginResult = await loginRequest(request_body)
           if (loginResult.status == true) {
-            store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(loginResult.data.value)}`)
+            store.setDiaLog(true, `获取变量成功${JSON.stringify(loginResult.data.value)}`)
           } else {
             store.set_Message(true, loginResult.message, "error")
           }
           //console.log(loginResult);
           watchCaptcha()
-          const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
-            //console.log(`弹窗状态改变`);
-            //console.log(store.dialog.dialogStatus);
-            if (store.dialog.dialogStatus == true) {
-              console.log("YES 上传青龙");
-              let upResult = await up(loginResult.data.variable, loginResult.data.value)
-              if (upResult.status == true) {
-                store.set_Message(true, upResult.message, "success")
-              } else {
-                store.set_Message(true, upResult.message, "error")
-              }
+          if (isUpdate.value == true) {
+            console.log("YES 上传青龙");
+            let upResult = await up(store.loginType, loginResult.data.variable, loginResult.data.value, remark.value)
+            if (upResult.status == true) {
+              store.set_Message(true, upResult.message, "success")
+            } else {
+              store.set_Message(true, upResult.message, "error")
             }
-            watchDialog()
-          })
+          }
           await RefreshAppInfo(2)
         })
       }
@@ -201,24 +194,20 @@ let login = async function () {
       Object.assign(request_body, { captcha: null })
       let result = await loginRequest(request_body)
       if (result.status == true) {
-        store.setDiaLog(true, `获取变量成功 点击确认上传到青龙自动化,点击取消不上传\n${JSON.stringify(result.data.value)}`)
+        store.setDiaLog(true, `获取变量成功${JSON.stringify(result.data.value)}`)
       } else {
         store.set_Message(true, result.message, "error")
       }
       await RefreshAppInfo(2)
-      const watchDialog = watch(() => store.dialog.status, async (newVal, oldVal) => {
-        //console.log(newVal);
-        if (store.dialog.dialogStatus == true) {
-          console.log("YES 上传青龙");
-          let upResult = await up(result.data.variable, result.data.value)
-          if (upResult.status == true) {
-            store.set_Message(true, upResult.message, "success")
-          } else {
-            store.set_Message(true, upResult.message, "error")
-          }
+      if (isUpdate.value == true) {
+        console.log("YES 上传青龙");
+        let upResult = await up(store.loginType, result.data.variable, result.data.value, remark.value)
+        if (upResult.status == true) {
+          store.set_Message(true, upResult.message, "success")
+        } else {
+          store.set_Message(true, upResult.message, "error")
         }
-        watchDialog()
-      })
+      }
 
     }
   }
@@ -228,11 +217,11 @@ let login = async function () {
 let sendSMS = async function () {
   if (app.value == "" || store.appInfo == {}) {
     store.set_Message(true, `请选择对应的App`, "error")
-    return //store.setDiaLog(true, `请选择对应的App`)
+    return
   }
   if (testPhoneNumber(store.phone) !== true) {
     store.set_Message(true, `请输入正确的手机号`, "error")
-    return //store.setDiaLog(true, `请输入正确的手机号`)
+    return
   }
   if (store.appInfo == null || store.appInfo == undefined) {
     return
@@ -260,13 +249,11 @@ let sendSMS = async function () {
       console.log(store[store.appInfo.captcha.type].status.success);//验证码状态*/
       const watchCaptcha = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
         // 在这里执行相关逻辑
-        console.log(`验证码通过`);
         //console.log(sendSMSRequest_body);
         Object.assign(sendSMSRequest_body, { captcha: store[store.appInfo.captcha.type].success })
         let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
         //console.log(SendSMSResult);
         store.set_appInfo(SendSMSResult.data)
-        //store.setDiaLog(true, SendSMSResult.message)
         if (SendSMSResult.status == true) {
           store.set_Message(true, SendSMSResult.message, "success")
           time60()
@@ -476,8 +463,13 @@ function time60() {
       <span>变量值</span><el-input type="text" v-model="value" placeholder="变量值" />
     </div>
     <br>
-    <el-button type="primary" @click="login" :id="store.LoginElementId">登录</el-button>
+    <div v-if="store.loginType != ``">
+      <el-input type="text" v-model="remark" placeholder="备注"></el-input>
+      <el-button type="primary" @click="login" :id="store.LoginElementId">登录</el-button>
+    </div>
     <br>
+    <div>上传变量</div>
+    <el-switch v-model="isUpdate" class="ml-2" style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" />
     <div v-if="store.Geetest3Captcha.status.show == true">
       <Geetest3Captcha />
     </div>

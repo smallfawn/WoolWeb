@@ -1,3 +1,4 @@
+export { testPhoneNumber, testEmail, getUUID, getRandomString, getTimeStamp }
 /**
  * 匹配中国大陆的手机号码 格式是以13-19开头的11位数字
  * @param {*} phoneNumber 
@@ -40,4 +41,6 @@ function getRandomString(length) {
     }
     return result;
 }
-export { testPhoneNumber, testEmail, getUUID, getRandomString }
+function getTimeStamp() {
+    return new Date().getTime()
+}

@@ -6,7 +6,6 @@
         <div v-if="store.dialog.status">
             <Dialog></Dialog>
         </div>
-
         <el-tabs v-model="activeName" @tab-click="">
             <el-tab-pane label="网站配置" name="first">
                 <div>
@@ -56,8 +55,6 @@
                         <el-input v-model="appTest"></el-input>
                         <span>变量正则(留空默认不校验参数)</span>
                         <el-input v-model="appRegular"></el-input>
-                        <span>请输入一个账号几个变量的分隔符(留空默认&)=功能复用暂时不用管</span>
-                        <el-input v-model="appStrSplitor"></el-input>
                         <span>请输入多个账号的分隔符(留空默认@)</span>
                         <el-input v-model="appEnvSplitor"></el-input>
                         <el-button type="primary" @click="update_">修改</el-button>
@@ -80,7 +77,6 @@ let qinglongVersion = ref("")
 let appVariable = ref("")
 let appTest = ref("")
 let appRegular = ref("")
-let appStrSplitor = ref("")
 let appEnvSplitor = ref("")
 const store = useCounterStore()
 let webInit = ref({})
@@ -101,7 +97,6 @@ async function set_qinglong() {
     } else {
         store.set_Message(true, result.message, "error")
     }
-    //store.setDiaLog(true, result.message)
 }
 async function test_qinglong() {
     let options = {
@@ -116,7 +111,6 @@ async function test_qinglong() {
     } else {
         store.set_Message(true, result.message, "error")
     }
-    //store.setDiaLog(true, result.message)
 }
 async function create_() {
     let result = await createValue(createApp.value)
@@ -126,7 +120,6 @@ async function create_() {
     } else {
         store.set_Message(true, result.message, "error")
     }
-    //store.setDiaLog(true, result.message)
 }
 async function search_() {
     let result = await valueApi("info", app.value)
@@ -134,7 +127,6 @@ async function search_() {
         appVariable.value = result.data.variable
         appTest.value = result.data.test
         appRegular.value = result.data.regular
-        appStrSplitor.value = result.data.strSplitor
         appEnvSplitor.value = result.data.envSplitor
         store.set_Message(true, result.message, "success")
     } else {
@@ -148,7 +140,6 @@ async function update_() {
         variable: appVariable.value,
         test: appTest.value,
         regular: appRegular.value,
-        strSplitor: appStrSplitor.value,
         envSplitor: appEnvSplitor.value
     })
     if (result.status == true) {
@@ -156,7 +147,6 @@ async function update_() {
     } else {
         store.set_Message(true, result.message, "error")
     }
-    //store.setDiaLog(true, result.message)
 }
 async function set_web() {
     let result = await adminSet("web", {
@@ -168,7 +158,6 @@ async function set_web() {
     } else {
         store.set_Message(true, result.message, "error")
     }
-    //store.setDiaLog(true, result.message)
 }
 
 
@@ -177,14 +166,8 @@ watch(app, () => {
 })
 onMounted(async () => {
     if (localStorage.getItem("WoolWebAdminToken") == "" || localStorage.getItem("WoolWebAdminToken") == null || localStorage.getItem == undefined) {
-        //store.setDiaLog(true, `未登录 即将跳转到登录页面`)
         store.set_Message(true, "未登录 即将跳转到登录页面")
         router.push("/Login")
-        /*const unwatch1 = watch(() => store.dialog.dialogStatus, async (newVal, oldVal) => {
-            router.push("/Login")
-            unwatch1()
-
-        })*/
     }
     let qinglong = await adminGet("qinglong")
     let web = await adminGet("web")

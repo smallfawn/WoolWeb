@@ -22,7 +22,7 @@ onMounted(() => {
             captchaObj.onReady(function () {
                 //验证码ready之后才能调用verify方法显示验证码
             }).onSuccess(function () {
-                console.log(`极验三代滑块验证通过`);
+                console.log(`极验三滑块验证通过`);
                 let result = captchaObj.getValidate();
                 store.set_captcha_success({
                     type: "Geetest3Captcha", success: {

@@ -1,11 +1,25 @@
 import HttpRequest from "./HttpRequest"
+
 export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, valueApi, createValue, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong }
 const appsApi = async function (type, data) {
-    let { data: result } = await HttpRequest({ url: `/api/main/apps?type=${type}&data=${data}` })
+    let options = {
+        method: 'GET',
+        url: `/api/main/apps?type=${type}&data=${data}`,
+        headers: {}
+    }
+    let { data: result } = await HttpRequest(options)
+
     return result
 }
 const qrcodeGetApi = async function (appname) {
-    let { data: result } = await HttpRequest({ url: `/api/main/qrcode/get?app=${appname}` })
+    let options = {
+        method: 'GET',
+        url: `/api/main/qrcode/get?app=${appname}`,
+        headers: {
+
+        }
+    }
+    let { data: result } = await HttpRequest(options)
     return result
 }
 const qrcodeLoginApi = async function (appname, value) {
@@ -20,7 +34,12 @@ const qrcodeLoginApi = async function (appname, value) {
 }
 
 const valueApi = async function (type, data) {
-    let { data: result } = await HttpRequest({ url: `/api/user/value?type=${type}&data=${data}` })
+    let options = {
+        method: 'GET',
+        url: `/api/user/value?type=${type}&data=${data}`,
+        headers: {}
+    }
+    let { data: result } = await HttpRequest(options)
     return result
 }
 const createValue = async function (appname) {
@@ -157,6 +176,9 @@ const getWeb = async function () {
     let options = {
         url: "/api/user/init",
         method: "GET",
+        headers: {
+
+        }
     }
     let { data: result } = await HttpRequest(options)
     return result
@@ -164,14 +186,22 @@ const getWeb = async function () {
 /**
  * 上传变量
  */
-const up = async function (variable, value, envSplitor = "@") {
+const up = async function (type, variable, value, remark = null, envSplitor = "@") {
+    let body
+    if (type == "custom") {
+        body = { variable: variable, value: value, remark: remark, envSplitor: envSplitor }
+    } else {
+        body = {
+            variable: variable, value: value, remark: remark, envSplitor: null
+        }
+    }
     let options = {
         url: "/api/user/up",
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        data: JSON.stringify({ variable: variable, value: value, envSplitor: envSplitor })
+        data: JSON.stringify(body)
     }
     let { data: result } = await HttpRequest(options)
     return result
