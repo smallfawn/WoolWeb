@@ -1,6 +1,6 @@
 import HttpRequest from "./HttpRequest"
 
-export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, valueApi, createValue, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong }
+export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong,configGet }
 const appsApi = async function (type, data) {
     let options = {
         method: 'GET',
@@ -8,7 +8,6 @@ const appsApi = async function (type, data) {
         headers: {}
     }
     let { data: result } = await HttpRequest(options)
-
     return result
 }
 const qrcodeGetApi = async function (appname) {
@@ -33,24 +32,7 @@ const qrcodeLoginApi = async function (appname, value) {
     return result
 }
 
-const valueApi = async function (type, data) {
-    let options = {
-        method: 'GET',
-        url: `/api/user/value?type=${type}&data=${data}`,
-        headers: {}
-    }
-    let { data: result } = await HttpRequest(options)
-    return result
-}
-const createValue = async function (appname) {
-    let { data: result } = await HttpRequest({
-        url: `/api/user/value/create`,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=UTF-8', token: localStorage.getItem("WoolWebAdminToken") },
-        data: JSON.stringify({ app: appname })
-    })
-    return result
-}
+
 const testQingLong = async function (options) {
     let url = options.url
     let id = options.id
@@ -63,14 +45,14 @@ const testQingLong = async function (options) {
     })
     return result
 }
-const updateValue = async function (appname, options) {
+const updateValue = async function (options) {
     let { data: result } = await HttpRequest({
         url: `/api/user/value/update`, method: 'POST',
         headers: {
             'Content-Type': 'application/json; charset=UTF-8',
             token: localStorage.getItem("WoolWebAdminToken")
         },
-        data: JSON.stringify({ app: appname, options: options })
+        data: JSON.stringify(options)
     })
     return result
 }
@@ -152,6 +134,15 @@ const adminGet = async function (variable) {
     let { data: result } = await HttpRequest(options)
     return result
 }
+const configGet = async function () {
+    let options = {
+        url: "/api/main/config",
+        method: "GET",
+        headers: {  },
+    }
+    let { data: result } = await HttpRequest(options)
+    return result
+}
 /**
  * 设置数据
  * @param {*} variable 键
@@ -186,22 +177,14 @@ const getWeb = async function () {
 /**
  * 上传变量
  */
-const up = async function (type, variable, value, remark = null, envSplitor = "@") {
-    let body
-    if (type == "custom") {
-        body = { variable: variable, value: value, remark: remark, envSplitor: envSplitor }
-    } else {
-        body = {
-            variable: variable, value: value, remark: remark, envSplitor: null
-        }
-    }
+const up = async function (variable, value, remark = null, envSplitor = null) {
     let options = {
-        url: "/api/user/up",
+        url: "/api/user/update",
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        data: JSON.stringify(body)
+        data: JSON.stringify({ variable: variable, value: value, remark: remark, envSplitor: envSplitor })
     }
     let { data: result } = await HttpRequest(options)
     return result

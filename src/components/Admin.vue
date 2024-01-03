@@ -7,7 +7,7 @@
             <Dialog></Dialog>
         </div>
         <el-tabs v-model="activeName" @tab-click="">
-            <el-tab-pane label="网站配置" name="first">
+            <el-tab-pane label="网站配置" name="web">
                 <div>
                     <table>
                         <span>网站名称:</span><el-input v-model="webInit.name"></el-input>
@@ -16,10 +16,9 @@
                     </table>
                 </div>
             </el-tab-pane>
-            <el-tab-pane label="青龙配置" name="second">
+            <el-tab-pane label="青龙配置" name="qinglong">
                 <div>
                     <table>
-                        先连通测试后修改
                         <br>
                         <span>青龙Url: 例如http://127.0.0.1:5700</span><el-input v-model="qinglongInit.url"></el-input>
                         <span>青龙应用id: 青龙系统设置 应用设置</span><el-input v-model="qinglongInit.id"></el-input>
@@ -32,59 +31,68 @@
                         <br>
                         <el-button type="primary" @click="test_qinglong">连通测试</el-button>
                         <el-button type="primary" @click="set_qinglong">修改</el-button>
-
                     </table>
                 </div>
             </el-tab-pane>
-            <el-tab-pane label="变量配置" name="third">
+            <el-tab-pane label="变量配置" name="value">
                 <div>
-                    <span>功能测试中: </span>
                     <table>
-                        <span>添加APP</span>
-                        <el-input v-model="createApp"></el-input>
                         <el-select v-model="app" class="m-2" placeholder="APP" size="large">
-                            <el-option v-for="item in applist" :value="item" />
+                            <el-option v-for="item of applist" :value="item.name" />
                         </el-select>
-                        <el-button type="primary" @click="create_">添加</el-button>
                         <br>
-                        <span>修改以下时请选择APP</span>
+                        <span>项目昵称</span>
+                        <el-input v-model="appName"></el-input>
                         <br>
-                        <span>请输入变量名(必填)</span>
+                        <span>变量名</span>
                         <el-input v-model="appVariable"></el-input>
-                        <span>请输入变量值示例(默认为空)</span>
+                        <span>变量值示例</span>
                         <el-input v-model="appTest"></el-input>
-                        <span>变量正则(留空默认不校验参数)</span>
+                        <span>变量正则</span><span class="red">非必填</span>
                         <el-input v-model="appRegular"></el-input>
-                        <span>请输入多个账号的分隔符(留空默认@)</span>
-                        <el-input v-model="appEnvSplitor"></el-input>
-                        <el-button type="primary" @click="update_">修改</el-button>
+                        <div>一对一变量模式</div>
+                        <el-switch v-model="OTO" class="ml-2"
+                            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" />
+                        <span v-if="OTO == false">请输入多个账号的分隔符</span>
+                        <el-input :disabled="OTO == true" v-model="appEnvSplitor"></el-input>
+                        <el-button type="primary" @click="update_">保存</el-button>
                     </table>
                 </div>
             </el-tab-pane>
         </el-tabs>
+
+
+    </div>
+    <div class="">
+        <div class="div-right-bottom">
+            当前版本:v1.3.5 最新版本:{{ config.version }}
+            <el-button @click="showConfig">查看更新信息
+            </el-button>
+        </div>
     </div>
 </template>
 <script setup>
 import Message from "./Message.vue";
 import { ref, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
-import { adminGet, adminSet, valueApi, createValue, updateValue, testQingLong } from "../assets/Request"
+import { adminGet, adminSet, updateValue, testQingLong, configGet } from "../assets/Request"
 import { useRouter } from 'vue-router'
 import Dialog from "./DiaLog.vue";
 const router = useRouter()
-let activeName = ref("first")
-let qinglongVersion = ref("")
+let OTO = ref(true)
+let activeName = ref("web")
+let qinglongVersion = ref("new")
 let appVariable = ref("")
 let appTest = ref("")
 let appRegular = ref("")
-let appEnvSplitor = ref("")
+let appEnvSplitor = ref(null)
 const store = useCounterStore()
 let webInit = ref({})
 let qinglongInit = ref({})
 let applist = ref([])
 let app = ref("")
-let createApp = ref("")
-
+let appName = ref("")
+let config = ref({})
 async function set_qinglong() {
     let result = await adminSet("qinglong", {
         url: qinglongInit.value.url,
@@ -112,31 +120,10 @@ async function test_qinglong() {
         store.set_Message(true, result.message, "error")
     }
 }
-async function create_() {
-    let result = await createValue(createApp.value)
-    if (result.status == true) {
-        applist.value = (await valueApi("list", null)).data
-        store.set_Message(true, result.message, "success")
-    } else {
-        store.set_Message(true, result.message, "error")
-    }
-}
-async function search_() {
-    let result = await valueApi("info", app.value)
-    if (result.status == true) {
-        appVariable.value = result.data.variable
-        appTest.value = result.data.test
-        appRegular.value = result.data.regular
-        appEnvSplitor.value = result.data.envSplitor
-        store.set_Message(true, result.message, "success")
-    } else {
-        store.set_Message(true, result.message, "error")
-    }
 
-
-}
 async function update_() {
-    let result = await updateValue(app.value, {
+    let result = await updateValue({
+        name: appName.value,
         variable: appVariable.value,
         test: appTest.value,
         regular: appRegular.value,
@@ -148,6 +135,8 @@ async function update_() {
         store.set_Message(true, result.message, "error")
     }
 }
+
+
 async function set_web() {
     let result = await adminSet("web", {
         name: webInit.value.name,
@@ -160,28 +149,83 @@ async function set_web() {
     }
 }
 
-
-watch(app, () => {
-    search_()
+watch(activeName, async (newVal, oldVal) => {
+    let result = await adminGet(newVal)
+    if (newVal == "web") {
+        if (result.status == true) {
+            webInit.value.name = result.data.name
+            webInit.value.notice = result.data.notice
+        }
+    } else if (newVal == "qinglong") {
+        if (result.status == true) {
+            qinglongVersion.value = result.data.version
+            qinglongInit.value.url = result.data.url
+            qinglongInit.value.id = result.data.id
+            qinglongInit.value.secret = result.data.secret
+        }
+    } else if (newVal == "value") {
+        if (result.status == true) {
+            applist.value = result.data
+        }
+    }
+})
+watch(app, (newVal, oldVal) => {
+    for (let i = 0; i < applist.value.length; i++) {
+        if (applist.value[i].name == newVal) {
+            appName.value = applist.value[i].name
+            appEnvSplitor.value = applist.value[i].envSplitor
+            appRegular.value = applist.value[i].regular
+            appVariable.value = applist.value[i].variable
+            appTest.value = applist.value[i].test
+            if (appEnvSplitor.value == null) {
+                OTO.value = true
+            } else {
+                OTO.value = false
+            }
+        }
+    }
+})
+watch(OTO, (newValue, oldValue) => {
+    if (newValue == true) {
+        appEnvSplitor.value = null
+    }
 })
 onMounted(async () => {
     if (localStorage.getItem("WoolWebAdminToken") == "" || localStorage.getItem("WoolWebAdminToken") == null || localStorage.getItem == undefined) {
         store.set_Message(true, "未登录 即将跳转到登录页面")
         router.push("/Login")
+        return
     }
-    let qinglong = await adminGet("qinglong")
-    let web = await adminGet("web")
-    if (web.status == true) {
-        webInit.value.name = web.data.name
-        webInit.value.notice = web.data.notice
+    console.log("AAA");
+    let result = await adminGet("web")
+    if (result.status == true) {
+        webInit.value.name = result.data.name
+        webInit.value.notice = result.data.notice
+    } else {
+        store.set_Message(true, "登录状态失效或文件异常 即将跳转到登录页面")
+        router.push("/Login")
+        return
     }
-    if (qinglong.status == true) {
-        qinglongVersion.value = qinglong.data.version
-        qinglongInit.value.url = qinglong.data.url
-        qinglongInit.value.id = qinglong.data.id
-        qinglongInit.value.secret = qinglong.data.secret
-    }
-    applist.value = (await valueApi("list", null)).data
+    let configResult = await configGet()
+    config.value = configResult
 })
+function showConfig() {
+    store.setDiaLog(true, `${config.value.update}`)
+}
 </script>
-<style scoped></style>
+<style scoped>
+.red {
+    color: red;
+}
+
+.container {
+    position: relative;
+}
+
+.div-right-bottom {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 20px;
+}
+</style>

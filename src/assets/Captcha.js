@@ -20,6 +20,10 @@ const Captcha_Config = {
     "Geetest3Captcha": {
         ScriptUrl: "https://static.geetest.com/static/js/gt.0.4.9.js",
         ElementId: "Geetest3Captcha"
+    },
+    "AliCaptcha": {
+        ScriptUrl: "https://g.alicdn.com/AWSC/AWSC/awsc.js",
+        ElementId: "AliCaptcha"
     }
 }
 

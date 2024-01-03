@@ -9,6 +9,22 @@ export const useCounterStore = defineStore('counter', {
                 message: "",
                 title: "",
             },
+            AliCaptcha: {
+                success: {
+                    sessionId: "",
+                    sig: "",
+                    token: ""
+                },
+                init: {
+                    appKey: "",
+                    scene: "",
+                },
+                show: null,
+                status: {
+                    show: false,
+                    success: false
+                },
+            },
             Message: {
                 status: false,
                 message: "",

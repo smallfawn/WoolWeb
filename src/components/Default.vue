@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onBeforeMount, onMounted, watch } from "vue"
-import { appsApi, sendSMSRequest, getWeb, up, loginRequest, valueApi, qrcodeGetApi, qrcodeLoginApi } from "../assets/Request"
+import { appsApi, sendSMSRequest, getWeb, up, loginRequest, qrcodeGetApi, qrcodeLoginApi, adminGet } from "../assets/Request"
 import Geetest3Captcha from "./Geetest3Captcha.vue";
 import TencentCaptcha from "./TencentCaptcha.vue";
 import YiDunCapacha from "./YiDunCapacha.vue";
 import { useCounterStore } from "../stores/counter";
+import AliCaptcha from "./AliCaptcha.vue";
 import { setCaptcha } from "../assets/Captcha";
 import Notification from "./Notification.vue";
 //import { useRouter } from 'vue-router';
@@ -30,7 +31,6 @@ let password = ref('');
 let phone = ref('');
 let code = ref("")
 let app = ref("")
-let AppListResult = ref("")
 let customValueUpdateConfig = ref({})
 let variable = ref("")
 let value = ref("")
@@ -45,7 +45,7 @@ let selectedMethod = async function (type) {
   //如果是自定义上传则不需要从总控获取APPLIST 而是从私有后端获取
   if (store.loginType == "custom") {
     app.value = ""
-    valueAppList.value = (await valueApi("list", null)).data
+    valueAppList.value = (await adminGet("value")).data
     return
   } else {
     app.value = ""
@@ -53,13 +53,11 @@ let selectedMethod = async function (type) {
     appList.value = (await appsApi("list", type)).data
     return
   }
-
 }
 
 async function createQRCODE() {
   if (app.value !== "") {
     let qrcodeResult = await qrcodeGetApi(app.value)
-    //console.log(app.value);
     if (qrcodeResult.data.type == "url") {
       getQRCode(qrcodeResult.data.data)
       qrcodeValue.value = qrcodeResult.data.value
@@ -109,7 +107,7 @@ let login = async function () {
   if (store.loginType == "custom") {
     /*if ( !== null)
       let regexp = new RegExp("patternString");*/
-    let upResult = await up(store.loginType, customValueUpdateConfig.value.variable, value.value, remark.value, customValueUpdateConfig.value.envSplitor)
+    let upResult = await up(customValueUpdateConfig.value.variable, value.value, remark.value, customValueUpdateConfig.envSplitor)
     if (upResult.status == true) {
       store.set_Message(true, upResult.message, "success")
     } else {
@@ -122,10 +120,11 @@ let login = async function () {
       store.setDiaLog(true, `获取变量成功${JSON.stringify(result.data.value)}`)
     } else {
       store.set_Message(true, result.message, "error")
+      return
     }
     if (isUpdate.value == true) {
       console.log("YES 上传青龙");
-      let upResult = await up(store.loginType, result.data.variable, result.data.value, remark.value)
+      let upResult = await up(result.data.variable, result.data.value, remark.value)
       if (upResult.status == true) {
         store.set_Message(true, upResult.message, "success")
       } else {
@@ -158,10 +157,12 @@ let login = async function () {
       Object.assign(request_body, { data: null })
     }
     if (store.appInfo.captcha !== null) {
-      console.log(`需要验证码`);
       if (store[store.appInfo.captcha.type].show !== null && store[store.appInfo.captcha.type].show !== undefined) {
-        console.log(`展示执行验证码`);
-        store[store.appInfo.captcha.type].show()
+        if (store.loginType == 1) {
+          //console.log(`展示执行验证码`);
+          store[store.appInfo.captcha.type].show()
+        }
+        //console.log(store.appInfo)
         //解决无需卸载监视的方法
         //1.在创建验证码后给store一个captchaIsSuccess 默认0  验证码成功后 设置为1 然后侦听captchaIsSuccess 如果为1则 构建请求
         //该方法无需根据后端返回null的情况而找不到type从而找不到对应验证码状态的store,但是需要考虑无需验证码时和返回null时
@@ -174,13 +175,16 @@ let login = async function () {
           if (loginResult.status == true) {
             store.setDiaLog(true, `获取变量成功${JSON.stringify(loginResult.data.value)}`)
           } else {
+            //获取CK频繁 失败 的处理逻辑
             store.set_Message(true, loginResult.message, "error")
+            //await RefreshAppInfo(2)
+            return
           }
           //console.log(loginResult);
           watchCaptcha()
           if (isUpdate.value == true) {
             console.log("YES 上传青龙");
-            let upResult = await up(store.loginType, loginResult.data.variable, loginResult.data.value, remark.value)
+            let upResult = await up(loginResult.data.variable, loginResult.data.value, remark.value)
             if (upResult.status == true) {
               store.set_Message(true, upResult.message, "success")
             } else {
@@ -197,21 +201,20 @@ let login = async function () {
         store.setDiaLog(true, `获取变量成功${JSON.stringify(result.data.value)}`)
       } else {
         store.set_Message(true, result.message, "error")
+        return
       }
       await RefreshAppInfo(2)
       if (isUpdate.value == true) {
         console.log("YES 上传青龙");
-        let upResult = await up(store.loginType, result.data.variable, result.data.value, remark.value)
+        let upResult = await up(result.data.variable, result.data.value, remark.value)
         if (upResult.status == true) {
           store.set_Message(true, upResult.message, "success")
         } else {
           store.set_Message(true, upResult.message, "error")
         }
       }
-
     }
   }
-
 }
 
 let sendSMS = async function () {
@@ -243,13 +246,15 @@ let sendSMS = async function () {
     console.log(`需要验证码`);
     if (store[store.appInfo.captcha.type].show !== null && store[store.appInfo.captcha.type].show !== undefined) {
       //console.log(`展示执行验证码`);
-      store[store.appInfo.captcha.type].show()
+      if (store.loginType ==2) {
+        store[store.appInfo.captcha.type].show()
+      }
       /*console.log(store.appInfo.captcha);//验证码配置
       console.log(store.appInfo.captcha.type);
       console.log(store[store.appInfo.captcha.type].status.success);//验证码状态*/
       const watchCaptcha = watch(() => store[store.appInfo.captcha.type].status.success, async (newVal, oldVal) => {
         // 在这里执行相关逻辑
-        //console.log(sendSMSRequest_body);
+        //console.log(`验证码验证通过`);
         Object.assign(sendSMSRequest_body, { captcha: store[store.appInfo.captcha.type].success })
         let SendSMSResult = await sendSMSRequest(sendSMSRequest_body)
         //console.log(SendSMSResult);
@@ -258,13 +263,17 @@ let sendSMS = async function () {
           store.set_Message(true, SendSMSResult.message, "success")
           time60()
         } else {
+          //获取验证码频繁 失败 的处理逻辑
+          //1.卸载监视 2.刷新APP信息 3.return
           store.set_Message(true, SendSMSResult.message, "error")
+          watchCaptcha()
+          await RefreshAppInfo(2)
+          return
         }
         if (SendSMSResult.data.captcha == null) {
           watchCaptcha()
           //卸载监视
         }
-
       })
     }
   } else {
@@ -279,14 +288,13 @@ let sendSMS = async function () {
     }
   }
 }
-
 onMounted(async () => {
   console.log(`Welcome to WoolWeb - 2w project`);
   console.log(new Date())
   console.log('%cAuthor:github.com/smallfawn', 'color: blue')
   let web = await getWeb()
   console.log(web);
-  store.set_Notification({ status: true, message: web.notice, title: "公告" })
+  store.set_Notification({ status: true, message: web.data.notice, title: "公告" })
 })
 onBeforeMount(async () => {
 
@@ -296,7 +304,7 @@ watch(value, async (newValue, oldValue) => {
   store.set_custom(variable.value, newValue)
   if (customValueUpdateConfig.value.regular !== null) {
     let regexp = new RegExp(customValueUpdateConfig.value.regular)
-    console.log(regexp);
+    //console.log(regexp);
     if (regexp.test(newValue)) {
       customValueTestText.value = `格式校验通过`
     } else {
@@ -341,9 +349,13 @@ watch(app, async (newValue) => {
     console.log(`您当前选择${newValue}`);
     let result
     if (store.loginType == "custom") {
-      result = await valueApi("info", newValue)
-      customValueUpdateConfig.value = result.data
-      console.log(customValueUpdateConfig.value);
+      let values = (await adminGet("value")).data
+      for (let i = 0; i < values.length; i++) {
+        if (values[i].name == newValue) {
+          customValueUpdateConfig.value = values[i]
+        }
+      }
+
     } else {
       await RefreshAppInfo(1)
     }
@@ -361,24 +373,25 @@ async function RefreshAppInfo(times) {
       store.set_appInfo(appInfoResult.data)
       //console.log(store.appInfo.type);
       if (store.appInfo.captcha !== null) {
-        console.log(`Need Captcha`);
+        //console.log(`Need Captcha`);
+        console.log(`This Api Need [${appInfoResult.data.captcha.type}] Params`);
         await setCaptcha(store.appInfo.captcha.type)
         store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
       } else {
         store.set_NoCaptcha()
-        console.log(`No Captcha`);
+        console.log(`This Api No [Captcha] Params`);
       }
     }
   } else if (times == 2) {
     //登录后重新获取 //防止验证码失效
-    console.log(`重新获取APPINFO`);
+    console.log(`重新获取APP信息`);
     store.set_appInfo(appInfoResult.data)
     if (store.appInfo.captcha !== null) {
-      console.log(`Need Captcha`);
+      //console.log(`此Api需`[appInfoResult.data.captcha]);
       store.set_Captcha({ type: store.appInfo.captcha.type, config: store.appInfo.captcha.config })
     } else {
       store.set_NoCaptcha()
-      console.log(`No Captcha`);
+      //console.log(`No Captcha`);
     }
   }
 }
@@ -400,6 +413,7 @@ function time60() {
 
 <template>
   <div class="">
+
     <div v-if="store.Message.status">
       <Message></Message>
     </div>
@@ -423,15 +437,15 @@ function time60() {
     </div>
     <div v-if="store.loginType == 'custom'">
       <el-select v-model="app" class="m-2" :placeholder="selectDefault" size="large">
-        <el-option v-for="item in valueAppList" :value="item" />
+        <el-option v-for="item in valueAppList" :value="item.name" />
       </el-select>
     </div>
     <br>
-    <div v-if="store.loginType == 1">
+    <div v-if="store.loginType == 1 && app !== ``">
       <el-input type="text" v-model="username" placeholder="用户名" />
       <el-input type="password" v-model="password" placeholder="密码" />
     </div>
-    <div v-if="store.loginType == 2">
+    <div v-if="store.loginType == 2 && app !== ``">
       <div>{{ testTips }}</div>
       <div class="sendsms-container">
         <el-input type="text" v-model="phone" placeholder="手机号"></el-input>
@@ -441,7 +455,7 @@ function time60() {
         </div>
       </div>
     </div>
-    <div v-if="store.loginType == 3">
+    <div v-if="store.loginType == 3 && app !== ``">
       {{ tips }}
       <div v-if="qrstatus">
         <el-table v-loading="true" style="width: 100%">
@@ -452,7 +466,7 @@ function time60() {
       </div>
       <el-button type="primary" @click="createQRCODE">获取/刷新 二维码</el-button>
     </div>
-    <div v-if="store.loginType == 'custom'">
+    <div v-if="store.loginType == 'custom' && app !== ``">
       <span>变量名</span>
       <br>
       <div v-if="customValueUpdateConfig.regular !== null"><span>{{ customValueTestText }}</span></div>
@@ -463,8 +477,10 @@ function time60() {
       <span>变量值</span><el-input type="text" v-model="value" placeholder="变量值" />
     </div>
     <br>
-    <div v-if="store.loginType != ``">
+
+    <div v-if="store.loginType != `` && app !== ``">
       <el-input type="text" v-model="remark" placeholder="备注"></el-input>
+      <br>
       <el-button type="primary" @click="login" :id="store.LoginElementId">登录</el-button>
     </div>
     <br>
@@ -478,6 +494,9 @@ function time60() {
     </div>
     <div v-if="store.YiDunCaptcha.status.show == true">
       <YiDunCapacha />
+    </div>
+    <div v-if="store.AliCaptcha.status.show == true">
+      <AliCaptcha></AliCaptcha>
     </div>
   </div>
 </template>
