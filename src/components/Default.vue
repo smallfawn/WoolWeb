@@ -107,7 +107,8 @@ let login = async function () {
   if (store.loginType == "custom") {
     /*if ( !== null)
       let regexp = new RegExp("patternString");*/
-    let upResult = await up(customValueUpdateConfig.value.variable, value.value, remark.value, customValueUpdateConfig.envSplitor)
+      console.log(customValueUpdateConfig)
+    let upResult = await up(customValueUpdateConfig.value.variable, value.value, remark.value, customValueUpdateConfig.value.envSplitor)
     if (upResult.status == true) {
       store.set_Message(true, upResult.message, "success")
     } else {
