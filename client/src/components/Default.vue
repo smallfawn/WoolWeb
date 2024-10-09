@@ -9,7 +9,7 @@ import AliCaptcha from "./AliCaptcha.vue";
 import { setCaptcha } from "../assets/Captcha";
 import Notification from "./Notification.vue";
 //import { useRouter } from 'vue-router';
-import DiaLog from "./DiaLog.vue";
+import DiaLog from "@/components/DiaLog.vue";
 import Message from "./Message.vue";
 import QRCode from 'qrcode'
 import { testPhoneNumber } from "../assets/Utils"
