@@ -15,6 +15,11 @@ export default defineConfig({
       },
     },
   },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    }
+  },
   server: {
     proxy: {
       // 配置反向代理  

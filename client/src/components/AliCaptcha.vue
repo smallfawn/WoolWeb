@@ -2,7 +2,6 @@
     <div id="AliCaptchaEle"></div>
 </template>
 <script setup>
-import DiaLog from './DiaLog.vue';
 import { useCounterStore } from '../stores/counter'
 const store = useCounterStore()
 // 实例化nc

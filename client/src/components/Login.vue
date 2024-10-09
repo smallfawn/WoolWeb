@@ -14,7 +14,6 @@
     </div>
 </template>
 <script setup>
-//import diaLog from "../components/DiaLog.vue"
 import Message from "./Message.vue";
 import { ref, onBeforeMount, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
