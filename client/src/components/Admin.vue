@@ -77,7 +77,7 @@ import { ref, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
 import { adminGet, adminSet, updateValue, testQingLong, configGet } from "../assets/Request"
 import { useRouter } from 'vue-router'
-import Dialog from "./DiaLog.vue";
+import Dialog from "./Dialog.vue";
 const router = useRouter()
 let OTO = ref(true)
 let activeName = ref("web")
