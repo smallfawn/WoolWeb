@@ -1,5 +1,6 @@
 const { httpRequest } = require("../utils/httpRequest")
 const {checkParams} = require("../utils/checkParams")
+const appVersion = "5.1.12"
 async function Login_GacmotorApp(phone, code) {
     let mobile = phone
     if (checkParams(mobile, code)) {
@@ -23,7 +24,7 @@ async function Login_GacmotorApp(phone, code) {
                 "deviceCode": deviceCode,
                 "current-time": timestamp2,
                 "deviceId": registrationID,
-                "version": "5.1.0",
+                "version": appVersion,
                 "nonce": nonce,
                 "sig": sig,
                 "platformNo": "Android",
@@ -74,7 +75,7 @@ async function SendSMS_GacmotorApp(phone) {
                 "deviceCode": "3cf4cc2a5fcf407a",
                 "current-time": timestamp2,
                 "deviceId": "1a0018970ba16cd9f17",
-                "version": "5.1.0",
+                "version": appVersion,
                 "nonce": nonce,
                 "sig": sig,
                 "platformNo": "Android",
