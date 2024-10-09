@@ -172,6 +172,100 @@ app.get('/', function (req, res, next) {
 app.get('/ping', function (req, res, next) {
     res.send("pong")
 })
+app.get('/api/main/apps', async function (req, res, next) {
+    const { type, data } = req.query
+    const { appinfo, applist } = require("./apps/apps")
+    if (type == "list") {
+        let result = await applist(data)
+        res.send(result)
+    } else if (type == "info") {
+        let result = await appinfo(data)
+        res.send(result)
+    }
+})
+app.post('/api/main/login', async function (req, res, next) {
+    const { app, username, password, phone, code, captcha, data } = req.body
+    if (app == "BiliBili") {
+        const { Login_BiliBili } = require("./apps/bilibili")
+        let result = await Login_BiliBili(username, password, captcha, data)
+        res.send(result)
+    } else if (app == "GacmotorApp") {
+        const { Login_GacmotorApp } = require("./apps/gacmotor")
+        let result = await Login_GacmotorApp(phone, code)
+        res.send(result)
+    } else if (app == "GacmotorH5") {
+        const { Login_GacmotorH5 } = require("./apps/gacmotor")
+        let result = await Login_GacmotorH5(phone, code)
+        res.send(result)
+    } else if (app == "Geely") {
+        const { Login_Geely } = require("./apps/geely")
+        let result = await Login_Geely(phone, code, data)
+        res.send(result)
+    } else if (app == "BeiJingEv") {
+        const { Login_BeiJingEv } = require("./apps/beijingev")
+        let result = await Login_BeiJingEv(phone, code)
+        res.send(result)
+    } else if (app == "CrazyReader") {
+        const { Login_CrazyReader } = require("./apps/crazyreader")
+        let result = await Login_CrazyReader(phone, code)
+        res.send(result)
+    } else if (app == "GeegaSMS") {
+        const { Login_Geega } = require("./apps/geega")
+        let result = await Login_Geega(phone, code)
+        res.send(result)
+    } else if (app == "GeegaPD") {
+        const { UserPassLogin_Geega } = require("./apps/geega")
+        let result = await UserPassLogin_Geega(username, password, captcha)
+        res.send(result)
+    }
+})
+app.post('/api/main/sms', async function (req, res, next) {
+    const { app, phone, captcha, data } = req.body
+    if (app == "GacmotorApp") {
+        const { SendSMS_GacmotorApp } = require("./apps/gacmotor")
+        let result = await SendSMS_GacmotorApp(phone)
+        res.send(result)
+    } else if (app == "GacmotorH5") {
+        const { SendSMS_GacmotorH5 } = require("./apps/gacmotor")
+        let result = await SendSMS_GacmotorH5(phone)
+        res.send(result)
+    } else if (app == "Geely") {
+        const { SendSMS_GeelyApp } = require("./apps/geely")
+        let result = await SendSMS_GeelyApp(phone, captcha)
+        res.send(result)
+    } else if (app == "BeiJingEv") {
+        const { SendSMS_BeiJingEv } = require("./apps/beijingev")
+        let result = await SendSMS_BeiJingEv(phone, captcha)
+        res.send(result)
+    } else if (app == "CrazyReader") {
+        const { SendSMS_CrazyReader } = require("./apps/crazyreader")
+        let result = await SendSMS_CrazyReader(phone)
+        res.send(result)
+    } else if (app == "Geega") {
+        const { SendSMS_Geega } = require("./apps/geega")
+        let result = await SendSMS_Geega(phone, captcha)
+        res.send(result)
+    }
+
+})
+app.get('/api/main/qrcode/get', async function (req, res, next) {
+    const { app } = req.query
+    if (app == "GacmotorQr") {
+        const { GetQrCode_Gacmotor } = require("./apps/gacmotor")
+        let result = await GetQrCode_Gacmotor()
+        res.send(result)
+    }
+
+})
+app.post('/api/main/qrcode/login', async function (req, res, next) {
+    const { app, value } = req.body
+    if (app == "GacmotorQr") {
+        const { LoginQrCode_Gacmotor } = require("./apps/gacmotor")
+        let result = await LoginQrCode_Gacmotor(value)
+        res.send(result)
+    }
+
+})
 app.listen(1433, () => {
     console.log('Server is running on port 1433');
 });

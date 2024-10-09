@@ -23,3 +23,5 @@ jobs:
 
       - name: Move build to server dist
         run: mv ./client/dist/* ./server/dist/
+      - name: server install
+        run: cd ./server && npm install
