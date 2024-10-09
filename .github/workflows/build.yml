@@ -1,0 +1,27 @@
+name: Build Vue and Move to Server
+
+on:
+  push:
+    branches:
+      - main # 在 push 到 main 分支时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16" 
+
+      - name: Install Dependencies
+        working-directory: ./client 
+        run: npm install
+          && npm run build
+          
+      - name: Move build to server dist
+        run: mv ./client/dist/* ./server/dist/

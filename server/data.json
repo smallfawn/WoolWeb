@@ -1,0 +1,16 @@
+{
+  "web": {
+    "name": "A",
+    "notice": "A"
+  },
+  "qinglong": {
+    "url": "",
+    "id": "",
+    "secret": "",
+    "version": "new"
+  },
+  "admin": {
+    "username": "",
+    "password": ""
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "applist": [
+    {
+      "name": "测试",
+      "variable": "demoaaaa",
+      "test": "测试哦",
+      "regular": "",
+      "envSplitor": null
+    }
+  ]
+}
