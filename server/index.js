@@ -266,6 +266,7 @@ app.post('/api/main/qrcode/login', async function (req, res, next) {
     }
 
 })
+
 app.listen(1433, () => {
     console.log('Server is running on port 1433');
 });

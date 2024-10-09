@@ -63,19 +63,13 @@
 
 
     </div>
-    <div class="">
-        <div class="div-right-bottom">
-            当前版本:v1.3.5 最新版本:{{ config.version }}
-            <el-button @click="showConfig">查看更新信息
-            </el-button>
-        </div>
-    </div>
+
 </template>
 <script setup>
 import Message from "./Message.vue";
 import { ref, onMounted, watch } from "vue"
 import { useCounterStore } from "../stores/counter";
-import { adminGet, adminSet, updateValue, testQingLong, configGet } from "../assets/Request"
+import { adminGet, adminSet, updateValue, testQingLong } from "../assets/Request"
 import { useRouter } from 'vue-router'
 import Dialog from "./Dialog.vue";
 const router = useRouter()
@@ -206,8 +200,7 @@ onMounted(async () => {
         router.push("/Login")
         return
     }
-    let configResult = await configGet()
-    config.value = configResult
+
 })
 function showConfig() {
     store.setDiaLog(true, `${config.value.update}`)

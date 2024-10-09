@@ -1,6 +1,6 @@
 import HttpRequest from "./HttpRequest"
 
-export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong,configGet }
+export { appsApi, adminLogin, adminRegister, adminGet, adminSet, getWeb, up, loginRequest, sendSMSRequest, updateValue, qrcodeGetApi, qrcodeLoginApi, testQingLong, }
 const appsApi = async function (type, data) {
     let options = {
         method: 'GET',
@@ -134,15 +134,7 @@ const adminGet = async function (variable) {
     let { data: result } = await HttpRequest(options)
     return result
 }
-const configGet = async function () {
-    let options = {
-        url: "/api/main/config",
-        method: "GET",
-        headers: {  },
-    }
-    let { data: result } = await HttpRequest(options)
-    return result
-}
+
 /**
  * 设置数据
  * @param {*} variable 键
