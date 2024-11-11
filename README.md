@@ -1,6 +1,4 @@
 ```yml
-version: '3'
-
 services:
   woolweb:
     image:  dockerpull.com/smallfawn/woolweb
@@ -10,6 +8,14 @@ services:
       - ./data.json:/app/data.json  # 映射 data.json
       - ./value.json:/app/value.json  # 映射 value.json
 ```
+
+# QLScriptpublic
+# JD 京东账密登录协议版本已发布 DOCKER一键部署 对接青龙 对接BOT
+购买地址
+http://smshop.back1.idcfengye.com/
+
+体验地址
+http://smjd.back1.idcfengye.com/
 # data.json 后台http://127.0.0.1:1433/#/admin 先注册后登录 然后必填qinglong配置
 ```json
 {
