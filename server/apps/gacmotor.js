@@ -14,8 +14,8 @@ async function Login_GacmotorApp(phone, code) {
         let sig = Crypto_MD5(`${timestamp1}${nonce}${appid}${key}`)
         let apiSignKey = `a361588rt20dpol`
         let apiSign = (Crypto_MD5(`${timestamp2}${apiSignKey}`)).toUpperCase()
-        let deviceCode = randomString(16)
-        let registrationID = randomString(19)
+        let deviceCode = '9e4bb0e5bc326fb1'
+        let registrationID = '170976fa8b8cd134f94'
         let options = {
             url: `https://next.gacmotor.com/app/app-api/login/loginBySms`,
             method: `POST`,
@@ -41,7 +41,7 @@ async function Login_GacmotorApp(phone, code) {
                 "Accept-Encoding": "gzip",
                 "User-Agent": "okhttp/4.8.1"
             },
-            data: JSON.stringify({ "mobilePhone": `${mobile}`, "registrationId": registrationID, "smsCode": `${code}` })
+            data: JSON.stringify({ "mobilePhone": `${mobile}`, "registrationId": registrationID, "smsCode": `${code}`,"blackBox": "rGPHQ1733625985yNQbzUFhLCa" })
         }
         //console.log(options);
         let { data: result } = await httpRequest(options)
@@ -72,7 +72,7 @@ async function SendSMS_GacmotorApp(phone) {
             method: `POST`,
             headers: {
                 "Accept": "application/json",
-                "deviceCode": "3cf4cc2a5fcf407a",
+                "deviceCode": "9e4bb0e5bc326fb1",
                 "current-time": timestamp2,
                 "deviceId": "1a0018970ba16cd9f17",
                 "version": appVersion,
@@ -82,7 +82,7 @@ async function SendSMS_GacmotorApp(phone) {
                 "osVersion": 10,
                 "operateSystem": "android",
                 "appId": appid,
-                "registrationID": "1a0018970ba16cd9f17",
+                "registrationID": "170976fa8b8cd134f94",
                 "api-sign": apiSign,
                 "deviceModel": "MI 8 Lite",
                 "timestamp": timestamp1,
